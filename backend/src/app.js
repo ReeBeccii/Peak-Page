@@ -6,6 +6,8 @@ import healthRoutes from "./routes/health.routes.js";
 import booksRoutes from "./routes/books.routes.js";
 import userBooksRoutes from "./routes/userBooks.routes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import googleBooksRoutes from "./routes/googleBooks.routes.js";
+
 
 const app = express();
 
@@ -18,6 +20,8 @@ app.use(morgan("dev"));
 app.use("/api", healthRoutes);
 app.use("/api/books", booksRoutes);
 app.use("/api/user-books", userBooksRoutes);
+app.use("/api/google-books", googleBooksRoutes);
+
 
 // 404 für unbekannte Routen
 app.use((req, res) => {
