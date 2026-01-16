@@ -1,0 +1,12 @@
+.logo-banner {
+  background-color: var(--primary-color);
+  height: 270px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo {
+  height: 270px;
+  display: block;
+}

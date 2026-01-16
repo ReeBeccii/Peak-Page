@@ -1,0 +1,27 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-size: 18px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text-color);
+}
+
+/* Main Background Bibliothek */
+.background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+  linear-gradient(rgba(80, 27, 29, .2), rgba(80, 27, 29, .2)),
+  url('../../assets/img/backgrounds/main-library.jpg') center/cover no-repeat;
+  filter: brightness(.6);
+  pointer-events: none;
+}

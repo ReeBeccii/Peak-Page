@@ -1,0 +1,25 @@
+.home-button {
+  color: var(--text-color);
+  background-color: var(--primary-color);
+  text-decoration: none;
+  padding: 10px 20px;
+  display: inline-block;
+  border-radius: 20px;
+  margin-top: 40px;
+}
+
+.home-button:hover {
+  background-color: var(--dark-color);
+}
+
+.hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 270px - 80px);
+  text-align: center;
+}
+
+h2 {
+  color: var(--text-color);
+}

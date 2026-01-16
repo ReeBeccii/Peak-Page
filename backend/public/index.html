@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Peake & Page</title>
+
+    <!-- Base -->
+    <link rel="stylesheet" href="css/base/variables.css" />
+    <link rel="stylesheet" href="css/base/global.css" />
+    <!-- Layout -->
+    <link rel="stylesheet" href="css/layout/header.css" />
+    <link rel="stylesheet" href="css/layout/footer.css" />
+    <link rel="stylesheet" href="css/layout/modal.css" />
+    <!-- Page -->
+    <link rel="stylesheet" href="css/pages/index.css" />
+</head>
+
+<body>
+    <header>
+        <div class="logo-banner">
+            <img class="logo" src="assets/img/logo/Logo_white_fixed.png" alt="Peake & Page Logo" />
+        </div>
+    </header>
+
+    <div class="background"></div>
+
+    <main>
+        <section class="hero">
+            <div class="hero-text">
+                <h2>„Bibliotheken sind das Gedächtnis der Menschheit.“</h2>
+                <button class="home-button" id="openLogin" type="button">Bibliothek öffnen</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+            <div class="modal-header">
+                <h3>Login</h3>
+                <button type="button" id="registerBtn" class="register-link">
+                    Registrieren
+                </button>
+            </div>
+
+            <form id="loginForm">
+                <label for="username">Benutzername</label>
+                <input id="username" name="username" type="text" autocomplete="username" required>
+
+                <label for="password">Passwort</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required />
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="closeLogin">Abbrechen</button>
+                    <button type="submit" class="btn-primary">Anmelden</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-banner">
+            <div class="footer-inner">
+                <a class="footer-link" href="#kontakt">Kontakt</a>
+                <a class="footer-link" href="#impressum">Impressum</a>
+                <a class="footer-link" href="#datenschutz">Datenschutz</a>
+            </div>
+        </div>
+    </footer>
+    <script src="js/pages/index.js"></script>
+</body>
+
+</html>
