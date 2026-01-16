@@ -1,31 +1,29 @@
-// backend/src/controllers/googleBooks.controller.js
-import { searchVolumes, getVolume } from "../services/googleBooks.service.js";
+// src/controllers/googleBooks.controller.js
+import { fetchGoogleVolumeByIsbn, mapVolumeToBook } from "../services/googleBooks.service.js";
 
-export async function searchGoogleBooks(req, res) {
-  const q = req.query.q?.trim();
-  if (!q) return res.status(400).json({ error: "Query-Parameter 'q' fehlt" });
+export async function getByIsbn(req, res, next) {
+  try {
+    const isbn = req.query.isbn;
 
-  const max = req.query.max ?? 10;
+    if (!isbn) {
+      return res.status(400).json({ error: "Bitte isbn als Query-Parameter angeben." });
+    }
 
-  const data = await searchVolumes({ q, maxResults: max });
+    const item = await fetchGoogleVolumeByIsbn(isbn);
 
-  // schlankes Response-Format fürs Frontend
-  const items = (data.items || []).map((v) => ({
-    google_id: v.id,
-    title: v.volumeInfo?.title ?? null,
-    authors: v.volumeInfo?.authors ?? [],
-    publishedDate: v.volumeInfo?.publishedDate ?? null,
-    isbn13: (v.volumeInfo?.industryIdentifiers || []).find((x) => x.type === "ISBN_13")?.identifier ?? null,
-    cover_url: v.volumeInfo?.imageLinks?.thumbnail ?? null,
-  }));
+    if (!item) {
+      return res.status(404).json({ error: "Kein Buch zu dieser ISBN gefunden." });
+    }
 
-  res.json({ totalItems: data.totalItems ?? 0, items });
-}
+    const book = mapVolumeToBook(item, isbn);
 
-export async function getGoogleBookById(req, res) {
-  const id = req.params.id;
-  if (!id) return res.status(400).json({ error: "Google Volume ID fehlt" });
+    // Falls Google zwar ein Item liefert, aber wir nichts Sinnvolles mappen konnten
+    if (!book || !book.title) {
+      return res.status(404).json({ error: "Buchdaten unvollständig." });
+    }
 
-  const volume = await getVolume(id);
-  res.json(volume);
+    return res.json({ ok: true, book });
+  } catch (err) {
+    next(err);
+  }
 }

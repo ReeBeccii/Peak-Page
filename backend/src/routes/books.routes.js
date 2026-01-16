@@ -1,11 +1,12 @@
+// src/routes/books.routes.js
 import { Router } from "express";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { getBooks, getBookById, importBookFromGoogle } from "../controllers/books.controller.js";
+import { listMyBooks, getBookById } from "../controllers/books.controller.js";
+import { createBook } from "../controllers/books.create.controller.js";
 
 const router = Router();
 
-router.get("/", asyncHandler(getBooks));
-router.get("/:id", asyncHandler(getBookById));
-router.post("/import", asyncHandler(importBookFromGoogle));
+router.get("/", listMyBooks);
+router.get("/:id", getBookById);
+router.post("/", createBook);
 
 export default router;

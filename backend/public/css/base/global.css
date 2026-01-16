@@ -2,6 +2,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  --footer-height: 80px;
 }
 
 html, body {
@@ -12,6 +13,7 @@ body {
   font-size: 18px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: var(--text-color);
+  padding-bottom: var(--footer-height);
 }
 
 /* Main Background Bibliothek */

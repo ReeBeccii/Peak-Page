@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Peake & Page – Hinzufügen</title>
+
+  <link rel="stylesheet" href="css/base/variables.css" />
+  <link rel="stylesheet" href="css/base/global.css" />
+  <link rel="stylesheet" href="css/layout/header.css" />
+  <link rel="stylesheet" href="css/layout/nav.css" />
+  <link rel="stylesheet" href="css/layout/footer.css" />
+  <link rel="stylesheet" href="css/pages/addbook.css" />
+
+  <script src="js/components/nav.js" defer></script>
+  <script src="js/pages/addbook.js" defer></script>
+</head>
+
+<body>
+  <header>
+    <div class="logo-banner">
+      <img class="logo" src="assets/img/logo/Logo_white_fixed.png" alt="Peake & Page Logo" />
+    </div>
+
+    <nav>
+      <button class="toggle-button" type="button" aria-label="Menü öffnen">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+
+      <div class="nav-container">
+        <ul>
+          <li><a href="home.html">Startseite</a></li>
+          <li><a href="addbook.html">Hinzufügen</a></li>
+          <li><a href="bibliothek.html">Bibliothek</a></li>
+          <li><a href="sub.html">SuB</a></li>
+          <li><a href="bor.html">Leihservice</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <div class="background"></div>
+
+  <main class="page">
+    <h1 class="page-title">Buch hinzufügen</h1>
+
+    <section class="card">
+      <div class="addbook-layout">
+
+        <form id="addBookForm">
+          <label for="title">Titel *</label>
+          <input id="title" name="title" type="text" required />
+
+          <label for="author">Autor:in *</label>
+          <input id="author" name="author" type="text" required />
+
+          <label for="isbn">ISBN</label>
+          <div class="isbn-row">
+            <input id="isbn" name="isbn" type="text" placeholder="z.B. 9783423214114" />
+            <button type="button" class="btn-primary isbn-btn" id="isbnSearchBtn">
+              ISBN suchen
+            </button>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <label for="year">Erscheinungsjahr</label>
+              <input id="year" name="year" type="number" min="0" max="9999" />
+            </div>
+            <div>
+              <label for="price">Preis (€)</label>
+              <input id="price" name="price" type="number" step="0.01" min="0" />
+            </div>
+          </div>
+
+          <label for="format">Format</label>
+          <select id="format" name="format">
+            <option value="paperback">Taschenbuch</option>
+            <option value="hardcover">Hardcover</option>
+            <option value="ebook">eBook</option>
+            <option value="audio">Hörbuch</option>
+          </select>
+
+          <label for="notes">Notizen</label>
+          <textarea id="notes" name="notes" rows="4" placeholder="Optional…"></textarea>
+
+          <div class="actions">
+            <button type="reset" class="btn-secondary">Leeren</button>
+            <button type="submit" class="btn-primary">Speichern</button>
+          </div>
+
+          <p class="hint" id="formHint"></p>
+        </form>
+
+        <aside class="cover-panel">
+          <div class="cover-box">
+            <img id="coverPreview" src="assets/img/placeholders/cover-placeholder.png" alt="Cover Vorschau" />
+            <p class="cover-caption" id="coverCaption">Cover Vorschau</p>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-banner">
+      <div class="footer-inner">
+        <a class="footer-link" href="#kontakt">Kontakt</a>
+        <a class="footer-link" href="#impressum">Impressum</a>
+        <a class="footer-link" href="#datenschutz">Datenschutz</a>
+      </div>
+    </div>
+  </footer>
+</body>
+
+</html>

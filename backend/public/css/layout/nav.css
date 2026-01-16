@@ -1,0 +1,136 @@
+/* ================================
+   Navigation (Desktop)
+================================ */
+
+nav {
+  position: relative;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center; /* DAS ist wichtig */
+  background-color: var(--dark-color);
+}
+
+/* Burger Button (Desktop versteckt) */
+.toggle-button {
+  display: none;
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+
+  width: 32px;
+  height: 32px;
+
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+
+.toggle-button .bar {
+  height: 4px;
+  width: 100%;
+  background-color: var(--text-color);
+  border-radius: 100px;
+}
+
+.nav-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+nav ul {
+  display: flex;
+}
+
+nav ul li {
+  height: 80px;
+  padding: 0 60px;
+  display: flex;
+  align-items: center;
+  list-style-type: none;
+  border-bottom: 4px solid var(--dark-color);
+}
+
+nav ul li:hover {
+  border-bottom: 4px solid var(--accent-color);
+}
+
+nav ul li a {
+  color: var(--text-color);
+  text-decoration: none;
+  font-size: 22px;
+  text-align: center;
+  line-height: 1;
+}
+
+/* ================================
+   Navigation (Mobile)
+================================ */
+@media (max-width: 1000px) {
+    /* NAV: Burger in die Mitte */
+  nav {
+    justify-content: center;
+  }
+
+  /* Burger sichtbar & NICHT mehr rechts angeklebt */
+  .toggle-button {
+    display: flex;
+    position: static;
+    top: auto;
+    right: auto;
+    transform: none;
+  }
+
+ /* Dropdown unter der Leiste */
+   .nav-container {
+     display: none;
+     position: absolute;
+     top: 80px;
+     left: 0;
+     right: 0;
+     width: 100%;
+     flex-direction: column;
+     background-color: var(--dark-color);
+     z-index: 1000;
+     border-top: 1px solid var(--accent-color);
+   }
+
+  .nav-container.active {
+    display: flex;
+  }
+
+  .nav-container ul {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  .nav-container li {
+    width: 100%;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--accent-color);
+    height: auto;
+    justify-content: center;
+  }
+
+  .nav-container li a {
+    display: block;
+    width: 100%;
+    text-align: center;
+  }
+
+  nav ul {
+    width: 100%;
+    margin: 0;
+  }
+}

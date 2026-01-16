@@ -1,0 +1,150 @@
+.page {
+  padding: 28px 18px 110px; /* Platz für fixed Footer */
+}
+
+.page-title {
+  text-align: center;
+  margin: 16px 0 24px;
+}
+
+/* Card darf breiter sein, sonst wirkt es gequetscht */
+.card {
+  max-width: 980px;
+  margin: 0 auto;
+  background: rgba(80, 27, 29, 0.75);
+  border: 1px solid var(--accent-color);
+  border-radius: 18px;
+  padding: 18px;
+  backdrop-filter: blur(2px);
+}
+
+label {
+  display: block;
+  margin: 12px 0 6px;
+  color: var(--gray-color);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btn-secondary,
+.btn-primary {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: var(--dark-color);
+  color: var(--text-color);
+}
+
+.btn-primary {
+  background: var(--accent-color);
+  color: var(--text-color);
+}
+
+.btn-secondary:hover,
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.hint {
+  margin-top: 12px;
+  min-height: 20px;
+  color: var(--text-color);
+  opacity: 0.9;
+}
+
+/* ISBN Zeile + Button */
+.isbn-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.isbn-btn {
+  white-space: nowrap;
+}
+
+/* Layout: Form links, Cover rechts */
+.addbook-layout {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 18px;
+  align-items: start;
+}
+
+.cover-panel {
+  position: sticky;
+  top: 160px;
+}
+
+.cover-box {
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--accent-color);
+  border-radius: 16px;
+  padding: 12px;
+  text-align: center;
+}
+
+#coverPreview {
+  width: 100%;
+  max-width: 200px;
+  border-radius: 12px;
+  border: 1px solid var(--accent-color);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.cover-caption {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--gray-color);
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+  .addbook-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cover-panel {
+    position: static;
+  }
+
+  #coverPreview {
+    max-width: 140px;
+  }
+}
+
+@media (max-width: 700px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .isbn-row {
+    grid-template-columns: 1fr;
+  }
+}

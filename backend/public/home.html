@@ -1,14 +1,22 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Peake & Page – Home</title>
+  <title>Peake & Page – Startseite</title>
 
+  <!-- Base -->
   <link rel="stylesheet" href="css/base/variables.css" />
   <link rel="stylesheet" href="css/base/global.css" />
+
+  <!-- Layout -->
   <link rel="stylesheet" href="css/layout/header.css" />
   <link rel="stylesheet" href="css/layout/footer.css" />
+  <link rel="stylesheet" href="css/layout/nav.css" />
+  <link rel="stylesheet" href="css/pages/home.css" />
+
+  <script src="js/components/nav.js" defer></script>
+  <script src="js/pages/home.js" defer></script>
 </head>
 
 <body>
@@ -16,17 +24,62 @@
     <div class="logo-banner">
       <img class="logo" src="assets/img/logo/Logo_white_fixed.png" alt="Peake & Page Logo" />
     </div>
+
+    <nav>
+      <button class="toggle-button" type="button" aria-label="Menü öffnen">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+
+      <div class="nav-container">
+        <ul>
+          <li><a href="home.html">Startseite</a></li>
+          <li><a href="addbook.html">Hinzufügen</a></li>
+          <li><a href="bibliothek.html">Bibliothek</a></li>
+          <li><a href="sub.html">SuB</a></li>
+          <li><a href="bor.html">Leihservice</a></li>
+        </ul>
+      </div>
+    </nav>
   </header>
 
   <div class="background"></div>
 
-  <main style="padding: 40px; text-align:center;">
-    <h2>Willkommen in deiner Bibliothek 📚</h2>
-    <p>Home ist noch im Aufbau. Aber hey: Navigation klappt schon mal.</p>
+  <main class="page">
+    <h1 class="page-title">Dashboard</h1>
 
-    <p style="margin-top: 20px;">
-      <a class="home-button" href="index.html">Zurück zur Startseite</a>
-    </p>
+    <section class="dashboard">
+      <div class="tile">
+        <h3>Gesamt Bücher</h3>
+        <p class="tile-value" id="statTotal">–</p>
+      </div>
+
+      <div class="tile">
+        <h3>Dieses Jahr gelesen</h3>
+        <p class="tile-value" id="statYearRead">–</p>
+      </div>
+
+      <div class="tile">
+        <h3>Ausgaben gesamt</h3>
+        <p class="tile-value" id="statSpend">–</p>
+      </div>
+
+      <div class="tile tile-wide">
+        <h3>Zuletzt gelesen</h3>
+        <p class="tile-value" id="statLastRead">–</p>
+      </div>
+
+      <div class="tile">
+        <h3>Aktuell am Lesen</h3>
+        <p class="tile-value" id="statCurrent">–</p>
+      </div>
+
+      <div class="tile">
+        <h3>Offene Leihen</h3>
+        <p class="tile-value" id="statLoans">–</p>
+      </div>
+    </section>
   </main>
 
   <footer>
