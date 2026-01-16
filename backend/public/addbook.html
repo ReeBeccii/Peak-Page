@@ -37,6 +37,10 @@
           <li><a href="bibliothek.html">Bibliothek</a></li>
           <li><a href="sub.html">SuB</a></li>
           <li><a href="bor.html">Leihservice</a></li>
+
+          <li class="nav-logout">
+            <button id="logoutBtn" class="logout-btn" type="button">Logout</button>
+          </li>
         </ul>
       </div>
     </nav>
@@ -57,14 +61,38 @@
           <label for="author">Autor:in *</label>
           <input id="author" name="author" type="text" required />
 
+          <!-- ISBN – eigene Zeile mit Button -->
           <label for="isbn">ISBN</label>
           <div class="isbn-row">
             <input id="isbn" name="isbn" type="text" placeholder="z.B. 9783423214114" />
-            <button type="button" class="btn-primary isbn-btn" id="isbnSearchBtn">
-              ISBN suchen
-            </button>
+            <button type="button" class="btn-primary isbn-btn" id="isbnSearchBtn">ISBN suchen</button>
           </div>
 
+          <!-- Status + Rating -->
+          <div class="grid-2">
+            <div>
+              <label for="status">Status *</label>
+              <select id="status" name="status" required>
+                <option value="unread">Ungelesen (SuB)</option>
+                <option value="finished">Gelesen (Bibliothek)</option>
+              </select>
+
+            </div>
+
+            <div>
+              <label for="rating">Bewertung (1–5)</label>
+              <select id="rating" name="rating">
+                <option value="" selected>–</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Jahr + Preis -->
           <div class="grid-2">
             <div>
               <label for="year">Erscheinungsjahr</label>
@@ -76,6 +104,7 @@
             </div>
           </div>
 
+          <!-- Format -->
           <label for="format">Format</label>
           <select id="format" name="format">
             <option value="paperback">Taschenbuch</option>
@@ -84,6 +113,7 @@
             <option value="audio">Hörbuch</option>
           </select>
 
+          <!-- Notizen -->
           <label for="notes">Notizen</label>
           <textarea id="notes" name="notes" rows="4" placeholder="Optional…"></textarea>
 
@@ -95,6 +125,7 @@
           <p class="hint" id="formHint"></p>
         </form>
 
+        <!-- Cover / Vorschau rechts -->
         <aside class="cover-panel">
           <div class="cover-box">
             <img id="coverPreview" src="assets/img/placeholders/cover-placeholder.png" alt="Cover Vorschau" />

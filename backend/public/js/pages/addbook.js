@@ -8,14 +8,10 @@ const coverPreview = document.getElementById("coverPreview");
 
 const placeholderCover = "/assets/img/placeholders/cover-placeholder.png";
 
-// Wir merken uns das aktuelle Cover (damit es beim Speichern mitkommt)
-let currentCoverUrl = null;
+// ✅ Merker: zuletzt gefundenes Cover (wird beim Speichern mitgeschickt)
+let lastCoverUrl = null;
 
-// Neu: Wir merken uns Autoren & Genres aus Google Books
-let currentAuthors = [];
-let currentGenres = [];
-
-// Kleiner Helfer: Hinweistext setzen
+// Hinweistext setzen
 function setHint(text, isError = false) {
   if (!hint) return;
   hint.textContent = text;
@@ -23,31 +19,27 @@ function setHint(text, isError = false) {
   hint.style.color = "#fff";
 }
 
-// Prüfen ob eingeloggt – sonst zurück zur Startseite
+// Login-Check
 async function requireLogin() {
   try {
     const res = await fetch("/api/auth/me", { credentials: "include" });
-    if (!res.ok) {
-      window.location.href = "index.html";
-    }
+    if (!res.ok) window.location.href = "index.html";
   } catch {
     window.location.href = "index.html";
   }
 }
 
 requireLogin();
+showCover(null);
 
-// Nur automatisch füllen, wenn Feld leer ist (damit du manuell überschreiben kannst)
+// Nur automatisch füllen, wenn Feld leer ist
 function fillIfEmpty(inputId, value) {
   const el = document.getElementById(inputId);
   if (!el) return;
-
-  if (!el.value.trim() && value) {
-    el.value = value;
-  }
+  if (!el.value.trim() && value) el.value = value;
 }
 
-// Cover anzeigen (oder Placeholder)
+// Cover anzeigen (mit Fallback)
 function showCover(url) {
   if (!coverPreview) return;
 
@@ -62,19 +54,12 @@ function showCover(url) {
   coverPreview.src = finalUrl;
 }
 
-// Initial: Placeholder anzeigen
-showCover(null);
-
 // ✅ ISBN suchen → Google Books → Formular befüllen
 isbnBtn?.addEventListener("click", async () => {
   const isbn = document.getElementById("isbn")?.value.trim();
 
   if (!isbn) {
     setHint("Bitte zuerst eine ISBN eingeben.", true);
-    currentCoverUrl = null;
-    currentAuthors = [];
-    currentGenres = [];
-    showCover(null);
     return;
   }
 
@@ -89,16 +74,13 @@ isbnBtn?.addEventListener("click", async () => {
 
     if (!res.ok) {
       setHint(data.error ?? "Keine Buchdaten gefunden.", true);
-      currentCoverUrl = null;
-      currentAuthors = [];
-      currentGenres = [];
+      lastCoverUrl = null;
       showCover(null);
       return;
     }
 
     const book = data.book ?? {};
 
-    // --- Felder befüllen ---
     fillIfEmpty("title", book.title);
 
     const authorText = Array.isArray(book.authors)
@@ -106,29 +88,17 @@ isbnBtn?.addEventListener("click", async () => {
       : (book.author ?? "");
 
     fillIfEmpty("author", authorText);
-
     fillIfEmpty("year", book.publishedYear ? String(book.publishedYear) : "");
     fillIfEmpty("isbn", book.isbn);
 
-    // --- Neu: Autoren & Genres merken (für DB) ---
-    // Google liefert Genres häufig als "categories"
-    currentAuthors = Array.isArray(book.authors) ? book.authors : [];
-    currentGenres = Array.isArray(book.categories) ? book.categories : [];
+    // ✅ Cover merken + anzeigen
+    lastCoverUrl = book.coverUrl ?? null;
+    showCover(lastCoverUrl);
 
-    // --- Cover merken + anzeigen ---
-    currentCoverUrl = book.coverUrl ?? null;
-    showCover(currentCoverUrl);
-
-    if (!currentCoverUrl) {
-      setHint("Buchdaten übernommen ✅ (kein Cover verfügbar – Platzhalter wird angezeigt)");
-    } else {
-      setHint("Buchdaten übernommen ✅ (du kannst alles noch ändern)");
-    }
+    setHint("Buchdaten übernommen ✅ (du kannst alles noch ändern)");
   } catch {
     setHint("Fehler: Server nicht erreichbar.", true);
-    currentCoverUrl = null;
-    currentAuthors = [];
-    currentGenres = [];
+    lastCoverUrl = null;
     showCover(null);
   }
 });
@@ -137,9 +107,21 @@ isbnBtn?.addEventListener("click", async () => {
 form?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
+  // ✅ Status ist Pflicht (unread | finished)
+  const statusEl = document.getElementById("status");
+  const status = statusEl ? statusEl.value : null;
+
+  // ✅ Rating optional (1..5 oder leer)
+  const ratingEl = document.getElementById("rating");
+  const ratingRaw = ratingEl ? ratingEl.value : "";
+  const rating =
+    ratingRaw !== null && String(ratingRaw).trim() !== ""
+      ? Number(ratingRaw)
+      : null;
+
   const payload = {
     title: document.getElementById("title")?.value.trim(),
-    author: document.getElementById("author")?.value.trim(), // bleibt fürs UI, DB kann es später normalisieren
+    author: document.getElementById("author")?.value.trim(),
     isbn: document.getElementById("isbn")?.value.trim() || null,
     year: document.getElementById("year")?.value
       ? Number(document.getElementById("year").value)
@@ -150,16 +132,19 @@ form?.addEventListener("submit", async (e) => {
     format: document.getElementById("format")?.value,
     notes: document.getElementById("notes")?.value.trim() || null,
 
-    // ✅ fürs Cover + spätere Anzeige
-    coverUrl: currentCoverUrl,
-
-    // ✅ neu: normalisierte Daten (Autoren/Genres) fürs Backend
-    authors: currentAuthors,
-    genres: currentGenres,
+    // ✅ NEU: Status + Rating + CoverUrl mitschicken
+    status,
+    rating,
+    coverUrl: lastCoverUrl,
   };
 
   if (!payload.title || !payload.author) {
     setHint("Titel und Autor:in sind Pflichtfelder.", true);
+    return;
+  }
+
+  if (!payload.status) {
+    setHint("Bitte einen Status wählen (Pflichtfeld).", true);
     return;
   }
 
@@ -183,10 +168,7 @@ form?.addEventListener("submit", async (e) => {
     setHint("Gespeichert ✅");
     form.reset();
 
-    // Reset Cover + Meta
-    currentCoverUrl = null;
-    currentAuthors = [];
-    currentGenres = [];
+    lastCoverUrl = null;
     showCover(null);
   } catch {
     setHint("Server nicht erreichbar.", true);

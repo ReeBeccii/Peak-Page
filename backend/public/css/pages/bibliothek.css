@@ -1,0 +1,267 @@
+.page {
+  padding: 28px 18px 110px; /* Platz für Footer */
+}
+
+.page-title {
+  text-align: center;
+  margin: 16px 0 24px;
+}
+
+/* ===== Filter Card ===== */
+.card {
+  max-width: 980px;
+  margin: 0 auto 16px;
+  background: rgba(80, 27, 29, 0.75);
+  border: 1px solid var(--accent-color);
+  border-radius: 18px;
+  padding: 18px;
+  backdrop-filter: blur(2px);
+}
+
+label {
+  display: block;
+  margin: 0 0 6px;
+  color: var(--gray-color);
+}
+
+select,
+input[type="search"] {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.filters-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  margin-top: 12px;
+  align-items: center;
+}
+
+.btn-secondary {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: var(--dark-color);
+  color: var(--text-color);
+}
+
+.btn-secondary:hover {
+  filter: brightness(1.1);
+}
+
+.hint {
+  margin-top: 12px;
+  min-height: 20px;
+  color: var(--text-color);
+  opacity: 0.9;
+}
+
+/* ===== Liste ===== */
+.list {
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ===== Buchkarte ===== */
+.book-card {
+  background: rgba(80, 27, 29, 0.75);
+  border: 1px solid var(--accent-color);
+  border-radius: 18px;
+  overflow: hidden;
+  backdrop-filter: blur(2px);
+}
+
+/* Klickbarer Kopf (Button) */
+.book-head {
+  all: unset;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 80px 1fr 240px;
+  gap: 18px;
+  align-items: center;
+
+  padding: 16px 18px;
+}
+
+.book-head:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Cover */
+.book-cover {
+  width: 70px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--accent-color);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* Textbereich */
+.book-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.book-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.book-author {
+  font-size: 14px;
+  color: var(--gray-color);
+}
+
+.book-meta {
+  font-size: 13px;
+  color: var(--gray-color);
+  opacity: 0.9;
+}
+
+/* rechte Spalte */
+.book-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+  text-align: auto;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  min-width: 180px;
+  padding: 6px 10px;
+  border-radius: 999px;
+
+  border: 1px solid var(--accent-color);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text-color);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.pill-open {
+  background: rgba(80, 27, 29, 0.35);
+}
+
+/* ===== Details (aufklappbar) ===== */
+/* In JS wird mit hidden ein/ausgeschaltet */
+.book-details {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 14px 18px 18px;
+  background: rgba(0, 0, 0, 0.10);
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.details-label {
+  font-size: 13px;
+  color: var(--gray-color);
+  margin-bottom: 6px;
+}
+
+.details-text {
+  color: var(--text-color);
+  white-space: pre-wrap;
+  line-height: 1.35;
+}
+
+.details-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Buttons in Details */
+.btn-primary {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: var(--accent-color);
+  color: var(--text-color);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn-danger {
+  background: #5c1f1f;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  filter: brightness(1.1);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 820px) {
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filters-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .book-head {
+    grid-template-columns: 70px 1fr;
+  }
+
+  .book-side {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: left;
+  }
+
+  .pill {
+    min-width: auto;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .details-actions {
+    justify-content: flex-start;
+  }
+}

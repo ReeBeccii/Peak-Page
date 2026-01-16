@@ -71,6 +71,38 @@ nav ul li a {
   line-height: 1;
 }
 
+/* Logout Button */
+.nav-logout {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+/* Logout wie normaler Nav-Link */
+.nav-logout {
+  height: 80px;
+  padding: 0 60px;
+  display: flex;
+  align-items: center;
+  list-style-type: none;
+  border-bottom: 4px solid var(--dark-color);
+}
+
+.nav-logout:hover {
+  border-bottom: 4px solid var(--accent-color);
+}
+
+.logout-btn {
+  all: unset; /* killt Button-Default-Styles */
+  cursor: pointer;
+  color: var(--text-color);
+  font-size: 22px;
+  text-align: center;
+  line-height: 1;
+}
+
+
+
 /* ================================
    Navigation (Mobile)
 ================================ */

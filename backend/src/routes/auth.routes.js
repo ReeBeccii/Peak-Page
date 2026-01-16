@@ -88,4 +88,16 @@ router.post("/logout", (req, res) => {
   });
 });
 
+// LOGOUT
+router.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ error: "Logout fehlgeschlagen." });
+    }
+
+    res.clearCookie("connect.sid");
+    res.json({ ok: true });
+  });
+});
+
 export default router;

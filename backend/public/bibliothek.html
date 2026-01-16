@@ -1,23 +1,19 @@
 <!DOCTYPE html>
 <html lang="de">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Peake & Page – Startseite</title>
+  <title>Peake & Page – Bibliothek</title>
 
-  <!-- Base -->
   <link rel="stylesheet" href="css/base/variables.css" />
   <link rel="stylesheet" href="css/base/global.css" />
-
-  <!-- Layout -->
   <link rel="stylesheet" href="css/layout/header.css" />
-  <link rel="stylesheet" href="css/layout/footer.css" />
   <link rel="stylesheet" href="css/layout/nav.css" />
-  <link rel="stylesheet" href="css/pages/home.css" />
+  <link rel="stylesheet" href="css/layout/footer.css" />
+  <link rel="stylesheet" href="css/pages/bibliothek.css" />
 
   <script src="js/components/nav.js" defer></script>
-  <script src="js/pages/home.js" defer></script>
+  <script src="js/pages/bibliothek.js" defer></script>
 </head>
 
 <body>
@@ -28,19 +24,17 @@
 
     <nav>
       <button class="toggle-button" type="button" aria-label="Menü öffnen">
-        <span class="bar"></span>
-        <span class="bar"></span>
-        <span class="bar"></span>
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
       </button>
 
       <div class="nav-container">
         <ul>
           <li><a href="home.html">Startseite</a></li>
           <li><a href="addbook.html">Hinzufügen</a></li>
-          <li><a href="bibliothek.html">Bibliothek</a></li>
+          <li><a class="active" href="bibliothek.html">Bibliothek</a></li>
           <li><a href="sub.html">SuB</a></li>
           <li><a href="bor.html">Leihservice</a></li>
-          <li class="nav-logout"><button id="logoutBtn" class="logout-btn">Logout</button></li>
+          <li><a href="#" id="logoutLink">Logout</a></li>
         </ul>
       </div>
     </nav>
@@ -49,39 +43,35 @@
   <div class="background"></div>
 
   <main class="page">
-    <h1 class="page-title">Dashboard</h1>
+    <h1 class="page-title">Bibliothek</h1>
 
-    <section class="dashboard">
-      <div class="tile">
-        <h3>Gesamt Bücher</h3>
-        <p class="tile-value" id="statTotal">–</p>
+    <section class="card filters">
+      <div class="filters-grid">
+        <div>
+          <label for="filterYear">Lesejahr</label>
+          <select id="filterYear"></select>
+        </div>
+
+        <div>
+          <label for="filterAuthor">Autor:in</label>
+          <select id="filterAuthor"></select>
+        </div>
+
+        <div>
+          <label for="filterFormat">Format</label>
+          <select id="filterFormat"></select>
+        </div>
       </div>
 
-      <div class="tile">
-        <h3>Dieses Jahr gelesen</h3>
-        <p class="tile-value" id="statYearRead">–</p>
+      <div class="filters-actions">
+        <input id="searchText" type="search" placeholder="Suchen (Titel/Autor) …" />
+        <button class="btn-secondary" id="resetFilters" type="button">Zurücksetzen</button>
       </div>
 
-      <div class="tile">
-        <h3>Ausgaben gesamt</h3>
-        <p class="tile-value" id="statSpend">–</p>
-      </div>
-
-      <div class="tile tile-wide">
-        <h3>Zuletzt gelesen</h3>
-        <p class="tile-value" id="statLastRead">–</p>
-      </div>
-
-      <div class="tile">
-        <h3>Aktuell am Lesen</h3>
-        <p class="tile-value" id="statCurrent">–</p>
-      </div>
-
-      <div class="tile">
-        <h3>Offene Leihen</h3>
-        <p class="tile-value" id="statLoans">–</p>
-      </div>
+      <p class="hint" id="listHint"></p>
     </section>
+
+    <section class="list" id="booksList" aria-live="polite"></section>
   </main>
 
   <footer>
@@ -94,5 +84,4 @@
     </div>
   </footer>
 </body>
-
 </html>
