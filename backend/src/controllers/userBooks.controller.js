@@ -87,9 +87,8 @@ export async function createUserBook(req, res) {
 
   res.status(201).json({ id: result.lastID, message: "Regal-Eintrag erstellt" });
 }
-
 /**
- * PUT /api/user-books/:id
+ * PUT/PATCH /api/user-books/:id
  * Aktualisiert einen Regal-Eintrag
  */
 export async function updateUserBook(req, res) {
@@ -101,45 +100,99 @@ export async function updateUserBook(req, res) {
     notes,
     rating,
     format_id,
+    format,          // ✅ erlaubt: "ebook" | "paperback" | ...
     price_paid,
+    pricePaid,       // ✅ erlaubt (Frontend): pricePaid
     started_at,
     finished_at,
     last_read_at
-  } = req.body;
+  } = req.body ?? {};
 
-  if (rating !== undefined && (typeof rating !== "number" || rating < 0 || rating > 5)) {
-    return res.status(400).json({ error: "rating muss zwischen 0 und 5 liegen" });
+  // rating 1..5 oder null/undefined
+  if (rating !== undefined && rating !== null) {
+    if (typeof rating !== "number" || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: "rating muss zwischen 1 und 5 liegen" });
+    }
   }
 
-  const existing = await dbGet(`SELECT id FROM user_books WHERE id = ?`, [id]);
+  // status prüfen (wenn geschickt)
+  const allowedStatus = new Set(["unread", "finished"]);
+  if (status !== undefined && status !== null && !allowedStatus.has(status)) {
+    return res.status(400).json({ error: "Ungültiger Status. Erlaubt: unread, finished." });
+  }
+
+  const existing = await dbGet(
+    `SELECT id, status, finished_at FROM user_books WHERE id = ?`,
+    [id]
+  );
   if (!existing) return res.status(404).json({ error: "Eintrag nicht gefunden" });
 
-  const result = await dbRun(
-    `UPDATE user_books
-     SET status       = COALESCE(?, status),
-         notes        = COALESCE(?, notes),
-         rating       = COALESCE(?, rating),
-         format_id    = COALESCE(?, format_id),
-         price_paid   = COALESCE(?, price_paid),
-         started_at   = COALESCE(?, started_at),
-         finished_at  = COALESCE(?, finished_at),
-         last_read_at = COALESCE(?, last_read_at)
-     WHERE id = ?`,
-    [
-      status ?? null,
-      notes ?? null,
-      rating ?? null,
-      format_id ?? null,
-      price_paid ?? null,
-      started_at ?? null,
-      finished_at ?? null,
-      last_read_at ?? null,
-      id
-    ]
-  );
+  // ✅ format_id ermitteln, wenn Frontend "format" schickt
+  let finalFormatId = format_id ?? null;
+  if (!finalFormatId && format) {
+    const row = await dbGet(`SELECT id FROM formats WHERE name = ? LIMIT 1`, [String(format)]);
+    if (row?.id) finalFormatId = row.id;
+  }
 
-  res.json({ message: "Eintrag aktualisiert", changes: result.changes });
+  // ✅ pricePaid alias
+  const finalPricePaid = (price_paid !== undefined) ? price_paid : pricePaid;
+
+  // ✅ finished_at Logik bei Statuswechsel
+  let finalFinishedAt = finished_at ?? null;
+
+  if (status === "finished") {
+    // wenn user kein finished_at schickt: automatisch setzen
+    if (!finalFinishedAt) {
+      finalFinishedAt = "AUTO_NOW";
+    }
+  }
+
+  if (status === "unread") {
+    // zurück in SuB -> finished_at weg
+    finalFinishedAt = "FORCE_NULL";
+  }
+
+  // SQL: finished_at dynamisch (AUTO_NOW / FORCE_NULL / normal COALESCE)
+  let finishedAtSql = "COALESCE(?, finished_at)";
+  let finishedAtParam = finalFinishedAt;
+
+  if (finalFinishedAt === "AUTO_NOW") {
+    finishedAtSql = "datetime('now')";
+    finishedAtParam = null;
+  } else if (finalFinishedAt === "FORCE_NULL") {
+    finishedAtSql = "NULL";
+    finishedAtParam = null;
+  }
+
+  const sql = `
+    UPDATE user_books
+    SET status       = COALESCE(?, status),
+        notes        = COALESCE(?, notes),
+        rating       = COALESCE(?, rating),
+        format_id    = COALESCE(?, format_id),
+        price_paid   = COALESCE(?, price_paid),
+        started_at   = COALESCE(?, started_at),
+        finished_at  = ${finishedAtSql},
+        last_read_at = COALESCE(?, last_read_at)
+    WHERE id = ?
+  `;
+
+  const result = await dbRun(sql, [
+    status ?? null,
+    notes ?? null,
+    rating ?? null,
+    finalFormatId ?? null,
+    (finalPricePaid !== undefined ? finalPricePaid : null),
+    started_at ?? null,
+    // Parameter für finished_at nur wenn COALESCE genutzt wird
+    ...(finishedAtSql.startsWith("COALESCE") ? [finishedAtParam] : []),
+    last_read_at ?? null,
+    id
+  ]);
+
+  res.json({ ok: true, message: "Eintrag aktualisiert", changes: result.changes });
 }
+
 
 /**
  * DELETE /api/user-books/:id
@@ -149,18 +202,17 @@ export async function deleteUserBook(req, res) {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: "Ungültige ID" });
 
-  const user_id = Number(req.body?.user_id);
-  if (!Number.isInteger(user_id)) {
-    return res.status(400).json({ error: "user_id muss im Body mitgesendet werden" });
-  }
+  // ✅ user aus Session statt Body
+  const userId = req.session?.user?.id;
+  if (!userId) return res.status(401).json({ error: "Nicht eingeloggt." });
 
   const existing = await dbGet(
     `SELECT id FROM user_books WHERE id = ? AND user_id = ?`,
-    [id, user_id]
+    [id, userId]
   );
   if (!existing) return res.status(404).json({ error: "Eintrag nicht gefunden oder gehört nicht dem User" });
 
   const result = await dbRun(`DELETE FROM user_books WHERE id = ?`, [id]);
-
-  res.json({ message: "Eintrag gelöscht", changes: result.changes });
+  res.json({ ok: true, message: "Eintrag gelöscht", changes: result.changes });
 }
+

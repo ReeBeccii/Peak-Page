@@ -1,3 +1,5 @@
+
+// src/routes/userBooks.routes.js
 import { Router } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {
@@ -17,12 +19,15 @@ router.get("/", asyncHandler(listUserBooks));
 // POST /api/user-books
 router.post(
   "/",
-  validate(["user_id", "book_id"]), // Pflichtfelder
+  validate(["user_id", "book_id"]),
   asyncHandler(createUserBook)
 );
 
 // PUT /api/user-books/:id
 router.put("/:id", asyncHandler(updateUserBook));
+
+// ✅ NEU: PATCH /api/user-books/:id (für dein Frontend)
+router.patch("/:id", asyncHandler(updateUserBook));
 
 // DELETE /api/user-books/:id
 router.delete("/:id", asyncHandler(deleteUserBook));

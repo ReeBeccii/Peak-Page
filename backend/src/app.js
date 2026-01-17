@@ -12,6 +12,7 @@ import userBooksRoutes from "./routes/userBooks.routes.js";
 import googleBooksRoutes from "./routes/googleBooks.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import libraryRoutes from "./routes/library.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
 
 import { errorHandler } from "./middlewares/errorHandler.js";
 
@@ -57,6 +58,7 @@ app.use("/api/books", booksRoutes);
 app.use("/api/user-books", userBooksRoutes);
 app.use("/api/google-books", googleBooksRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // ✅ NEU: Bibliothek-API
 app.use("/api/library", libraryRoutes);

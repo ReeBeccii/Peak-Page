@@ -1,23 +1,20 @@
-// src/routes/library.routes.js
+// backend/src/routes/library.routes.js
 import { Router } from "express";
 import {
-  listLibraryBooks,
-  getLibraryFilters,
+  listLibrary,
+  updateUserBook,
+  deleteUserBook,
 } from "../controllers/library.controller.js";
 
 const router = Router();
 
-function requireAuth(req, res, next) {
-  if (!req.session?.user?.id) {
-    return res.status(401).json({ error: "Nicht eingeloggt." });
-  }
-  next();
-}
+// Liste (z.B. /api/library?status=finished)
+router.get("/", listLibrary);
 
-// Bücher (Bibliothek / SuB) laden
-router.get("/", requireAuth, listLibraryBooks);
+// Bearbeiten eines user_books Eintrags
+router.patch("/:userBookId", updateUserBook);
 
-// Dropdown-Daten (Jahre/Autor:innen/Formate)
-router.get("/filters", requireAuth, getLibraryFilters);
+// Löschen eines user_books Eintrags (nur user_books, nicht books!)
+router.delete("/:userBookId", deleteUserBook);
 
 export default router;

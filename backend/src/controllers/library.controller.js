@@ -1,183 +1,226 @@
-// src/controllers/library.controller.js
-import { dbAll, dbGet } from "../db/db.js";
+// backend/src/controllers/library.controller.js
+import { dbAll, dbGet, dbRun } from "../db/db.js";
 
 /**
- * GET /api/library?status=finished|unread|reading|read&year=2026&author=...&format=...&q=...
+ * GET /api/library?status=finished|unread
+ * Liefert Bücher für den eingeloggten User inkl. Book-Infos + Autoren + Genres
  */
-export async function listLibraryBooks(req, res) {
+export async function listLibrary(req, res) {
   try {
-    const userId = req.session.user.id;
+    const userId = req.session?.user?.id;
+    if (!userId) return res.status(401).json({ error: "Nicht eingeloggt." });
 
-    // Query-Params
-    let { status = "finished", year = "", author = "", format = "", q = "" } = req.query;
+    const status = (req.query.status || "finished").toString();
 
-    // ✅ Frontend "read" => DB "finished"
-    if (status === "read") status = "finished";
-
-    // Basis-SQL
-    // NOTE: GROUP_CONCAT(DISTINCT x) darf in SQLite KEIN eigenes Trennzeichen haben.
-    let sql = `
+    // user_books + books + formats
+    const rows = await dbAll(
+      `
       SELECT
-        ub.id AS user_book_id,
-        ub.status,
-        ub.rating,
-        ub.notes,
-        ub.price_paid,
-        ub.finished_at,
-        b.id AS book_id,
-        b.title,
-        b.isbn13,
-        b.cover_url,
-        f.name AS format_name,
+        ub.id              AS userBookId,
+        ub.status          AS status,
+        ub.rating          AS rating,
+        ub.notes           AS notes,
+        ub.price_paid      AS pricePaid,
+        ub.finished_at     AS finishedAt,
 
-        COALESCE(GROUP_CONCAT(DISTINCT a.name), '') AS authors,
-        COALESCE(GROUP_CONCAT(DISTINCT g.name), '') AS genres
+        b.id               AS bookId,
+        b.title            AS title,
+        b.isbn13           AS isbn13,
+        b.cover_url        AS coverUrl,
 
+        f.name             AS format
       FROM user_books ub
-      JOIN books b ON b.id = ub.book_id
-      LEFT JOIN formats f ON f.id = ub.format_id
-
-      LEFT JOIN book_authors ba ON ba.book_id = b.id
-      LEFT JOIN authors a ON a.id = ba.author_id
-
-      LEFT JOIN book_genres bg ON bg.book_id = b.id
-      LEFT JOIN genres g ON g.id = bg.genre_id
-
+      JOIN books b   ON b.id = ub.book_id
+      JOIN formats f ON f.id = ub.format_id
       WHERE ub.user_id = ?
         AND ub.status = ?
-    `;
-
-    const params = [userId, status];
-
-    // Jahr filtert nach finished_at (wie du wolltest)
-    if (year) {
-      sql += ` AND strftime('%Y', ub.finished_at) = ? `;
-      params.push(String(year));
-    }
-
-    // Autor:in Filter (matcht auf authors.name)
-    if (author) {
-      sql += ` AND EXISTS (
-        SELECT 1
-        FROM book_authors ba2
-        JOIN authors a2 ON a2.id = ba2.author_id
-        WHERE ba2.book_id = b.id AND a2.name = ?
-      ) `;
-      params.push(author);
-    }
-
-    // Format Filter
-    if (format) {
-      sql += ` AND f.name = ? `;
-      params.push(format);
-    }
-
-    // Suche Titel/Autor
-    if (q) {
-      sql += ` AND (
-        b.title LIKE ?
-        OR EXISTS (
-          SELECT 1
-          FROM book_authors ba3
-          JOIN authors a3 ON a3.id = ba3.author_id
-          WHERE ba3.book_id = b.id AND a3.name LIKE ?
-        )
-      ) `;
-      params.push(`%${q}%`, `%${q}%`);
-    }
-
-    sql += `
-      GROUP BY ub.id
       ORDER BY ub.finished_at DESC, ub.id DESC
-    `;
+      `,
+      [userId, status]
+    );
 
-    const rows = await dbAll(sql, params);
+    // Autoren & Genres je bookId nachladen (einfach & robust)
+    const books = [];
+    for (const r of rows) {
+      const authorsRows = await dbAll(
+        `
+        SELECT a.name
+        FROM book_authors ba
+        JOIN authors a ON a.id = ba.author_id
+        WHERE ba.book_id = ?
+        ORDER BY a.name ASC
+        `,
+        [r.bookId]
+      );
 
-    // hübscher machen (authors/genres als Arrays)
-    const books = rows.map((r) => ({
-      userBookId: r.user_book_id,
-      status: r.status,
-      rating: r.rating,
-      notes: r.notes,
-      pricePaid: r.price_paid,
-      finishedAt: r.finished_at,
+      const genresRows = await dbAll(
+        `
+        SELECT g.name
+        FROM book_genres bg
+        JOIN genres g ON g.id = bg.genre_id
+        WHERE bg.book_id = ?
+        ORDER BY g.name ASC
+        `,
+        [r.bookId]
+      );
 
-      book: {
-        id: r.book_id,
-        title: r.title,
-        isbn13: r.isbn13,
-        coverUrl: r.cover_url,
-      },
+      const finishedYear =
+        r.finishedAt ? Number(String(r.finishedAt).slice(0, 4)) : null;
 
-      format: r.format_name || null,
-      authors: r.authors ? r.authors.split(",") .map(s => s.trim()).filter(Boolean) : [],
-      genres: r.genres ? r.genres.split(",") .map(s => s.trim()).filter(Boolean) : [],
-      finishedYear: r.finished_at ? Number(String(r.finished_at).slice(0, 4)) : null,
-    }));
+      books.push({
+        userBookId: r.userBookId,
+        status: r.status,
+        rating: r.rating,
+        notes: r.notes,
+        pricePaid: r.pricePaid,
+        finishedAt: r.finishedAt,
+        finishedYear,
+
+        book: {
+          id: r.bookId,
+          title: r.title,
+          isbn13: r.isbn13,
+          coverUrl: r.coverUrl,
+        },
+
+        format: r.format,
+        authors: authorsRows.map((x) => x.name),
+        genres: genresRows.map((x) => x.name),
+      });
+    }
 
     return res.json({ ok: true, books });
   } catch (err) {
-    console.error("❌ library list error:", err);
-    return res.status(500).json({ error: "Serverfehler beim Laden der Bibliothek." });
+    console.error("❌ listLibrary Fehler:", err);
+    return res.status(500).json({ error: "Serverfehler beim Laden." });
   }
 }
 
 /**
- * GET /api/library/filters?status=finished|unread|reading|read
- * -> liefert Dropdown-Daten
+ * PATCH /api/library/:userBookId
+ * Erwartet JSON:
+ * {
+ *   finishedYear, notes, rating, pricePaid, format
+ * }
  */
-export async function getLibraryFilters(req, res) {
+export async function updateUserBook(req, res) {
   try {
-    const userId = req.session.user.id;
-    let { status = "finished" } = req.query;
+    const userId = req.session?.user?.id;
+    if (!userId) return res.status(401).json({ error: "Nicht eingeloggt." });
 
-    if (status === "read") status = "finished";
+    const userBookId = Number(req.params.userBookId);
+    if (!Number.isInteger(userBookId)) {
+      return res.status(400).json({ error: "Ungültige ID." });
+    }
 
-    // Jahre (aus finished_at)
-    const yearsRows = await dbAll(
+    // Prüfen ob der Eintrag dem User gehört
+    const existing = await dbGet(
+      "SELECT id FROM user_books WHERE id = ? AND user_id = ? LIMIT 1",
+      [userBookId, userId]
+    );
+    if (!existing) {
+      return res.status(404).json({ error: "Eintrag nicht gefunden." });
+    }
+
+    const { finishedYear, notes, rating, pricePaid, format } = req.body ?? {};
+
+    // finishedYear Pflicht (weil Bibliothek = finished Bücher)
+    const y = Number(finishedYear);
+    if (!Number.isInteger(y) || y < 1000 || y > 9999) {
+      return res.status(400).json({ error: "Lesejahr muss ein gültiges Jahr sein." });
+    }
+
+    // finished_at aus Jahr bauen (01.01. Jahr)
+    const finishedAt = `${y}-01-01 00:00:00`;
+
+    // rating optional 1..5
+    let ratingValue = null;
+    if (rating !== undefined && rating !== null && String(rating).trim() !== "") {
+      const n = Number(rating);
+      if (!Number.isInteger(n) || n < 1 || n > 5) {
+        return res.status(400).json({ error: "Bewertung muss 1 bis 5 sein." });
+      }
+      ratingValue = n;
+    }
+
+    // price optional
+    let priceValue = null;
+    if (pricePaid !== undefined && pricePaid !== null && String(pricePaid).trim() !== "") {
+      const p = Number(pricePaid);
+      if (!Number.isFinite(p) || p < 0) {
+        return res.status(400).json({ error: "Preis muss eine Zahl >= 0 sein." });
+      }
+      priceValue = p;
+    }
+
+    // format -> format_id
+    async function getFormatId(formatValue) {
+      const row = await dbGet("SELECT id FROM formats WHERE name = ? LIMIT 1", [formatValue]);
+      if (row?.id) return row.id;
+
+      const fallback = await dbGet("SELECT id FROM formats ORDER BY id ASC LIMIT 1");
+      if (fallback?.id) return fallback.id;
+
+      throw new Error("formats Tabelle ist leer.");
+    }
+
+    const formatId = await getFormatId(format);
+
+    await dbRun(
       `
-      SELECT DISTINCT strftime('%Y', finished_at) AS y
-      FROM user_books
-      WHERE user_id = ? AND status = ? AND finished_at IS NOT NULL
-      ORDER BY y DESC
+      UPDATE user_books
+      SET
+        format_id = ?,
+        rating = ?,
+        notes = ?,
+        price_paid = ?,
+        finished_at = ?
+      WHERE id = ? AND user_id = ?
       `,
-      [userId, status]
+      [
+        formatId,
+        ratingValue,
+        notes?.toString().trim() || null,
+        priceValue,
+        finishedAt,
+        userBookId,
+        userId,
+      ]
     );
 
-    // Autoren (nur die Bücher, die in diesem Status beim User vorkommen)
-    const authorsRows = await dbAll(
-      `
-      SELECT DISTINCT a.name AS name
-      FROM user_books ub
-      JOIN books b ON b.id = ub.book_id
-      JOIN book_authors ba ON ba.book_id = b.id
-      JOIN authors a ON a.id = ba.author_id
-      WHERE ub.user_id = ? AND ub.status = ?
-      ORDER BY a.name COLLATE NOCASE
-      `,
-      [userId, status]
-    );
-
-    // Formate (name)
-    const formatsRows = await dbAll(
-      `
-      SELECT DISTINCT f.name AS name
-      FROM user_books ub
-      LEFT JOIN formats f ON f.id = ub.format_id
-      WHERE ub.user_id = ? AND ub.status = ? AND f.name IS NOT NULL
-      ORDER BY f.name COLLATE NOCASE
-      `,
-      [userId, status]
-    );
-
-    return res.json({
-      ok: true,
-      years: yearsRows.map((r) => r.y).filter(Boolean),
-      authors: authorsRows.map((r) => r.name).filter(Boolean),
-      formats: formatsRows.map((r) => r.name).filter(Boolean),
-    });
+    return res.json({ ok: true });
   } catch (err) {
-    console.error("❌ library filters error:", err);
-    return res.status(500).json({ error: "Serverfehler beim Laden der Filter." });
+    console.error("❌ updateUserBook Fehler:", err);
+    return res.status(500).json({ error: "Serverfehler beim Speichern." });
+  }
+}
+
+/**
+ * DELETE /api/library/:userBookId
+ * Löscht NUR user_books Eintrag (Buch bleibt in books bestehen!)
+ */
+export async function deleteUserBook(req, res) {
+  try {
+    const userId = req.session?.user?.id;
+    if (!userId) return res.status(401).json({ error: "Nicht eingeloggt." });
+
+    const userBookId = Number(req.params.userBookId);
+    if (!Number.isInteger(userBookId)) {
+      return res.status(400).json({ error: "Ungültige ID." });
+    }
+
+    const del = await dbRun(
+      "DELETE FROM user_books WHERE id = ? AND user_id = ?",
+      [userBookId, userId]
+    );
+
+    if (del.changes === 0) {
+      return res.status(404).json({ error: "Eintrag nicht gefunden." });
+    }
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ deleteUserBook Fehler:", err);
+    return res.status(500).json({ error: "Serverfehler beim Löschen." });
   }
 }

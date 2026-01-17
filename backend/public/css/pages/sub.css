@@ -1,0 +1,327 @@
+.page {
+  padding: 28px 18px 110px;
+}
+
+.page-title {
+  text-align: center;
+  margin: 16px 0 24px;
+}
+
+.card {
+  max-width: 980px;
+  margin: 0 auto 16px;
+  background: rgba(80, 27, 29, 0.75);
+  border: 1px solid var(--accent-color);
+  border-radius: 18px;
+  padding: 18px;
+  backdrop-filter: blur(2px);
+}
+
+label {
+  display: block;
+  margin: 0 0 6px;
+  color: var(--gray-color);
+}
+
+select, input[type="search"], input[type="number"], input[type="text"], textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.filters-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  margin-top: 12px;
+  align-items: center;
+}
+
+.btn-secondary {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: var(--dark-color);
+  color: var(--text-color);
+}
+
+.btn-secondary:hover {
+  filter: brightness(1.1);
+}
+
+.hint {
+  margin-top: 12px;
+  min-height: 20px;
+  color: var(--text-color);
+  opacity: 0.9;
+}
+
+/* Liste */
+.list {
+  max-width: 980px;
+  margin: 0 auto;
+  display: grid;
+  gap: 12px;
+}
+
+/* Buchkarte */
+.book-card {
+  background: rgba(80, 27, 29, 0.75);
+  border: 1px solid var(--accent-color);
+  border-radius: 16px;
+  overflow: hidden;
+  backdrop-filter: blur(2px);
+}
+
+/* Klickbarer Kopf */
+.book-head {
+  all: unset;
+  cursor: pointer;
+
+  display: grid;
+  grid-template-columns: 70px 1fr auto;
+  gap: 14px;
+  align-items: center;
+
+  padding: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.book-head:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Cover */
+.book-cover {
+  width: 60px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--accent-color);
+  background: #fff;
+}
+
+/* Text */
+.book-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.book-title {
+  font-weight: 700;
+  color: var(--text-color);
+  font-size: 18px;
+}
+
+.book-author {
+  font-size: 14px;
+  color: var(--gray-color);
+}
+
+.book-meta {
+  font-size: 13px;
+  color: var(--gray-color);
+}
+
+/* Rechte Seite */
+.book-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.pill {
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text-color);
+}
+
+/* Aufklapp-Bereich */
+.book-details {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 14px;
+  display: none;
+}
+
+.book-card.open .book-details {
+  display: grid;
+  gap: 12px;
+}
+
+.details-label {
+  font-size: 13px;
+  color: var(--gray-color);
+}
+
+.details-text {
+  white-space: pre-wrap;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+.details-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Danger Button */
+.btn-danger {
+  background: #5c1f1f;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.btn-danger:hover { filter: brightness(1.1); }
+
+/* Primärbutton */
+.btn-primary {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: var(--accent-color);
+  color: #fff;
+  font-weight: 600;
+}
+.btn-primary:hover { filter: brightness(1.1); }
+
+/* ===============================
+   Edit-Form (SuB) – hübscher & kompakter
+   =============================== */
+
+.edit-form {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(80, 27, 29, 0.35); /* mehr "Peak&Page" statt graues Feld */
+  backdrop-filter: blur(3px);
+}
+
+/* Grid: Label links schmaler, Feld rechts */
+.edit-form .detail-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px 14px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.edit-form .detail-row .k {
+  color: var(--gray-color);
+  font-size: 13px;
+  line-height: 1.2;
+  padding: 0;               /* weg mit dem "runtergeschobenen" Label */
+  opacity: 0.95;
+}
+
+.edit-form .detail-row .v {
+  width: 100%;
+}
+
+/* Inputs: nicht mehr knallweiß, sondern "soft" */
+.edit-form input,
+.edit-form select,
+.edit-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-color);
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Placeholder / Auswahltext */
+.edit-form input::placeholder,
+.edit-form textarea::placeholder {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* Fokus = leichter Glow */
+.edit-form input:focus,
+.edit-form select:focus,
+.edit-form textarea:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+/* Textarea */
+.edit-form textarea {
+  min-height: 90px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+/* Buttons unten rechts, gleich hoch */
+.edit-form .details-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.edit-form .details-actions button {
+  min-width: 120px;
+}
+
+/* Mobile: alles untereinander, Buttons full width */
+@media (max-width: 820px) {
+  .edit-form .detail-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .edit-form .details-actions button {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 820px) {
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filters-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .book-head {
+    grid-template-columns: 60px 1fr;
+  }
+
+  .book-side {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .edit-form .detail-row {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-form .details-actions button {
+    flex: 1;
+  }
+}

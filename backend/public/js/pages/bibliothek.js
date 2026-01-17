@@ -1,7 +1,7 @@
 // public/js/pages/bibliothek.js
 
 const listEl = document.getElementById("booksList");
-const hintEl = document.getElementById("listHint");
+const listHint = document.getElementById("listHint");
 
 const filterYear = document.getElementById("filterYear");
 const filterAuthor = document.getElementById("filterAuthor");
@@ -9,78 +9,104 @@ const filterFormat = document.getElementById("filterFormat");
 const searchText = document.getElementById("searchText");
 const resetBtn = document.getElementById("resetFilters");
 
-const placeholderCover = "/assets/img/placeholders/cover-placeholder.png";
+const logoutLink = document.getElementById("logoutLink");
 
-// In-Memory Daten
-let allItems = [];      // komplette API Antwort (gefiltert: status finished)
-let filteredItems = []; // nach UI Filter
+const PLACEHOLDER_COVER = "/assets/img/placeholders/cover-placeholder.png";
+
+let allBooks = [];     // komplette API-Liste
+let filteredBooks = []; // nach Filter + Suche
 
 function setHint(text) {
-  if (!hintEl) return;
-  hintEl.textContent = text || "";
+  if (!listHint) return;
+  listHint.textContent = text;
+  listHint.style.opacity = "1";
+  listHint.style.color = "#fff";
 }
 
-function esc(str) {
-  return String(str ?? "").replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  }[c]));
+function esc(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
-function moneyEUR(n) {
-  if (n === null || n === undefined || n === "") return "—";
-  const num = Number(n);
-  if (!Number.isFinite(num)) return "—";
-  return `${num.toFixed(2).replace(".", ",")} €`;
+function coverUrlOrPlaceholder(url) {
+  if (!url) return PLACEHOLDER_COVER;
+  return String(url).replace(/^http:\/\//, "https://");
 }
 
-function stars(n) {
-  const val = Number(n);
-  if (!Number.isFinite(val) || val <= 0) return "—";
-  const full = "★".repeat(Math.max(0, Math.min(5, val)));
-  const empty = "☆".repeat(Math.max(0, 5 - Math.min(5, val)));
-  return full + empty;
-}
-
+// Login-Check
 async function requireLogin() {
-  const res = await fetch("/api/auth/me", { credentials: "include" });
-  if (!res.ok) window.location.href = "index.html";
+  try {
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    if (!res.ok) window.location.href = "index.html";
+  } catch {
+    window.location.href = "index.html";
+  }
 }
 
-async function fetchLibraryFinished() {
+// Logout
+logoutLink?.addEventListener("click", async (e) => {
+  e.preventDefault();
+  try {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+  } finally {
+    window.location.href = "index.html";
+  }
+});
+
+// API laden
+async function loadLibrary() {
+  setHint("Lade Bücher…");
   const res = await fetch("/api/library?status=finished", { credentials: "include" });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "Fehler beim Laden.");
-  return data.books || [];
+
+  if (!res.ok) {
+    setHint(data.error ?? "Fehler beim Laden.");
+    allBooks = [];
+    applyFilters();
+    return;
+  }
+
+  allBooks = data.books ?? [];
+  buildFilterOptions(allBooks);
+  applyFilters();
 }
 
-function buildFilters(items) {
-  // Year (finishedYear)
-  const years = [...new Set(items.map(x => x.finishedYear).filter(Boolean))].sort((a,b)=>b-a);
+function uniqSorted(arr) {
+  return [...new Set(arr)].filter(Boolean).sort((a, b) => String(a).localeCompare(String(b), "de"));
+}
 
-  // Authors
-  const authors = [...new Set(items.flatMap(x => x.authors || []).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"de"));
+function buildFilterOptions(books) {
+  // Jahre
+  const years = uniqSorted(
+    books.map((b) => b.finishedYear).filter((y) => Number.isInteger(y))
+  ).sort((a, b) => b - a);
 
-  // Formats
-  const formats = [...new Set(items.map(x => x.format).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"de"));
+  // Autoren (wir nehmen die erste/n als String – bei dir meist genau 1)
+  const authors = uniqSorted(
+    books.flatMap((b) => (Array.isArray(b.authors) ? b.authors : []))
+  );
 
-  // helper to fill select
-  function fillSelect(sel, values, labelAll="Alle") {
-    if (!sel) return;
-    sel.innerHTML = "";
+  // Formate
+  const formats = uniqSorted(books.map((b) => b.format));
+
+  // Helper: Select befüllen
+  function fillSelect(select, values, allLabel = "Alle") {
+    if (!select) return;
+    select.innerHTML = "";
+
     const optAll = document.createElement("option");
     optAll.value = "";
-    optAll.textContent = labelAll;
-    sel.appendChild(optAll);
+    optAll.textContent = allLabel;
+    select.appendChild(optAll);
 
     for (const v of values) {
       const opt = document.createElement("option");
       opt.value = String(v);
       opt.textContent = String(v);
-      sel.appendChild(opt);
+      select.appendChild(opt);
     }
   }
 
@@ -90,175 +116,289 @@ function buildFilters(items) {
 }
 
 function applyFilters() {
-  const yearVal = filterYear?.value || "";
-  const authorVal = filterAuthor?.value || "";
-  const formatVal = filterFormat?.value || "";
+  const y = filterYear?.value || "";
+  const a = filterAuthor?.value || "";
+  const f = filterFormat?.value || "";
   const q = (searchText?.value || "").trim().toLowerCase();
 
-  filteredItems = allItems.filter(item => {
-    if (yearVal && String(item.finishedYear || "") !== yearVal) return false;
-    if (formatVal && String(item.format || "") !== formatVal) return false;
-
-    if (authorVal) {
-      const a = item.authors || [];
-      if (!a.includes(authorVal)) return false;
+  filteredBooks = allBooks.filter((b) => {
+    if (y && String(b.finishedYear) !== String(y)) return false;
+    if (a) {
+      const authors = Array.isArray(b.authors) ? b.authors : [];
+      if (!authors.includes(a)) return false;
     }
+    if (f && String(b.format) !== String(f)) return false;
 
     if (q) {
-      const title = item.book?.title || "";
-      const authorJoined = (item.authors || []).join(", ");
-      const hay = `${title} ${authorJoined}`.toLowerCase();
+      const title = b.book?.title ?? "";
+      const authors = (Array.isArray(b.authors) ? b.authors.join(" ") : "");
+      const hay = `${title} ${authors}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
-
     return true;
   });
 
-  renderList(filteredItems);
+  renderList(filteredBooks);
 }
 
-function renderList(items) {
+function stars(n) {
+  const x = Number(n);
+  if (!Number.isInteger(x) || x < 1) return "—";
+  return "★".repeat(x) + "☆".repeat(5 - x);
+}
+
+function renderList(books) {
   if (!listEl) return;
 
-  if (!items.length) {
+  if (!books.length) {
     listEl.innerHTML = "";
     setHint("Keine Bücher für diese Filter gefunden.");
     return;
   }
 
-  setHint(`${items.length} Buch/Bücher angezeigt.`);
+  setHint(`${books.length} Buch/Bücher angezeigt.`);
 
-  listEl.innerHTML = items.map((item) => {
-    const coverUrl = item.book?.coverUrl || null;
-    const safeCover = coverUrl ? String(coverUrl).replace(/^http:\/\//, "https://") : placeholderCover;
+  listEl.innerHTML = books.map((b) => {
+    const title = b.book?.title || "(ohne Titel)";
+    const author = (Array.isArray(b.authors) && b.authors[0]) ? b.authors[0] : "—";
+    const format = b.format || "—";
+    const year = b.finishedYear || "—";
 
-    const title = item.book?.title || "(ohne Titel)";
-    const authorLine = (item.authors && item.authors.length) ? item.authors.join(", ") : "—";
-    const meta = `${item.format || "—"} · Lesejahr ${item.finishedYear || "—"}`;
+    const cover = coverUrlOrPlaceholder(b.book?.coverUrl);
 
-    const ratingLine = `Bewertung: ${stars(item.rating)}`;
-    const priceLine = `Preis: ${moneyEUR(item.pricePaid)}`;
-    const notes = item.notes ? esc(item.notes) : "—";
+    const ratingText = stars(b.rating);
+    const priceText =
+      (b.pricePaid === null || b.pricePaid === undefined || b.pricePaid === "")
+        ? "—"
+        : `${Number(b.pricePaid).toFixed(2)} €`;
 
-    // Details sind initial hidden (via hidden attribute)
+    const notes = b.notes || "—";
+
+    // Wir bauen pro Karte ein kleines Edit-Form (versteckt), damit Editen easy ist.
     return `
-      <article class="book-card" data-userbookid="${item.userBookId}">
-        <button class="book-head" type="button" data-action="toggle" aria-expanded="false">
-          <img class="book-cover" src="${esc(safeCover)}" alt="Cover: ${esc(title)}"
-               onerror="this.src='${placeholderCover}'" />
+      <article class="book-card" data-userbookid="${b.userBookId}">
+        <div class="book-head" role="button" tabindex="0" aria-expanded="false">
+          <img class="book-cover" src="${esc(cover)}" alt="Cover ${esc(title)}"
+               onerror="this.src='${esc(PLACEHOLDER_COVER)}'">
 
           <div class="book-main">
             <div class="book-title">${esc(title)}</div>
-            <div class="book-author">${esc(authorLine)}</div>
-            <div class="book-meta">${esc(meta)}</div>
+            <div class="book-author">${esc(author)}</div>
+            <div class="book-meta">${esc(format)} · Lesejahr ${esc(year)}</div>
           </div>
 
+          <!-- Die 3 “Pills” rechts -->
           <div class="book-side">
-            <span class="pill">${esc(ratingLine)}</span>
-            <span class="pill">${esc(priceLine)}</span>
-            <span class="pill pill-open">Details ▾</span>
+            <div class="pill">Bewertung: ${esc(ratingText)}</div>
+            <div class="pill">Preis: ${esc(priceText)}</div>
+            <div class="pill pill-details">Details ▾</div>
           </div>
-        </button>
+        </div>
 
         <div class="book-details" hidden>
           <div class="details-grid">
             <div>
               <div class="details-label">Notizen</div>
-              <div class="details-text">${notes}</div>
+              <div class="details-text">${esc(notes)}</div>
             </div>
 
             <div class="details-actions">
-              <button class="btn-primary" type="button" data-action="edit">Bearbeiten</button>
-              <button class="btn-danger" type="button" data-action="delete">Löschen</button>
+              <button class="btn-secondary js-edit" type="button">Bearbeiten</button>
+              <button class="btn-danger js-delete" type="button">Löschen</button>
             </div>
+
+            <form class="edit-form" hidden>
+              <div class="detail-row">
+                <div class="k">Lesejahr</div>
+                <div class="v">
+                  <input class="edit-year" type="number" min="1000" max="9999" value="${esc(year)}" />
+                </div>
+              </div>
+
+              <div class="detail-row">
+                <div class="k">Format</div>
+                <div class="v">
+                  <select class="edit-format">
+                    <option value="paperback" ${format === "paperback" ? "selected" : ""}>Taschenbuch</option>
+                    <option value="hardcover" ${format === "hardcover" ? "selected" : ""}>Hardcover</option>
+                    <option value="ebook" ${format === "ebook" ? "selected" : ""}>eBook</option>
+                    <option value="audio" ${format === "audio" ? "selected" : ""}>Hörbuch</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="detail-row">
+                <div class="k">Bewertung (1–5)</div>
+                <div class="v">
+                  <select class="edit-rating">
+                    <option value="">(keine)</option>
+                    <option value="1" ${b.rating === 1 ? "selected" : ""}>1</option>
+                    <option value="2" ${b.rating === 2 ? "selected" : ""}>2</option>
+                    <option value="3" ${b.rating === 3 ? "selected" : ""}>3</option>
+                    <option value="4" ${b.rating === 4 ? "selected" : ""}>4</option>
+                    <option value="5" ${b.rating === 5 ? "selected" : ""}>5</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="detail-row">
+                <div class="k">Preis (€)</div>
+                <div class="v">
+                  <input class="edit-price" type="number" step="0.01" min="0"
+                         value="${b.pricePaid ?? ""}" placeholder="optional" />
+                </div>
+              </div>
+
+              <div class="detail-row">
+                <div class="k">Notizen</div>
+                <div class="v">
+                  <textarea class="edit-notes" rows="3" placeholder="optional">${esc(b.notes ?? "")}</textarea>
+                </div>
+              </div>
+
+              <div class="details-actions">
+                <button class="btn-secondary js-cancel" type="button">Abbrechen</button>
+                <button class="btn-primary js-save" type="submit">Speichern</button>
+              </div>
+            </form>
           </div>
         </div>
       </article>
     `;
   }).join("");
+
+  wireCardEvents();
 }
 
-/* =========================
-   Events
-   ========================= */
+function wireCardEvents() {
+  // Auf-/Zuklappen + Buttons
+  const cards = listEl.querySelectorAll(".book-card");
+  cards.forEach((card) => {
+    const head = card.querySelector(".book-head");
+    const details = card.querySelector(".book-details");
 
-function wireFilterEvents() {
-  filterYear?.addEventListener("change", applyFilters);
-  filterAuthor?.addEventListener("change", applyFilters);
-  filterFormat?.addEventListener("change", applyFilters);
-  searchText?.addEventListener("input", applyFilters);
+    // Toggle Details
+    function toggle() {
+      const isOpen = !details.hasAttribute("hidden");
+      if (isOpen) {
+        details.setAttribute("hidden", "");
+        card.classList.remove("open");
+        head.setAttribute("aria-expanded", "false");
+      } else {
+        details.removeAttribute("hidden");
+        card.classList.add("open");
+        head.setAttribute("aria-expanded", "true");
+      }
+    }
 
-  resetBtn?.addEventListener("click", () => {
-    if (filterYear) filterYear.value = "";
-    if (filterAuthor) filterAuthor.value = "";
-    if (filterFormat) filterFormat.value = "";
-    if (searchText) searchText.value = "";
-    applyFilters();
+    head?.addEventListener("click", (e) => {
+      // Falls jemand direkt auf Button klickt -> nicht togglen
+      if (e.target.closest("button")) return;
+      toggle();
+    });
+
+    head?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggle();
+      }
+    });
+
+    // Bearbeiten anzeigen
+    const editBtn = card.querySelector(".js-edit");
+    const delBtn = card.querySelector(".js-delete");
+
+    const editForm = card.querySelector(".edit-form");
+    const cancelBtn = card.querySelector(".js-cancel");
+
+    editBtn?.addEventListener("click", () => {
+      editForm?.removeAttribute("hidden");
+    });
+
+    cancelBtn?.addEventListener("click", () => {
+      editForm?.setAttribute("hidden", "");
+    });
+
+    // Löschen
+    delBtn?.addEventListener("click", async () => {
+      const userBookId = card.dataset.userbookid;
+      if (!userBookId) return;
+
+      const ok = confirm("Willst du diesen Eintrag wirklich löschen?");
+      if (!ok) return;
+
+      const res = await fetch(`/api/library/${encodeURIComponent(userBookId)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error ?? "Fehler beim Löschen.");
+        return;
+      }
+
+      // aus UI entfernen + Filter neu anwenden
+      allBooks = allBooks.filter((b) => String(b.userBookId) !== String(userBookId));
+      applyFilters();
+    });
+
+    // Speichern (PATCH)
+    editForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const userBookId = card.dataset.userbookid;
+      if (!userBookId) return;
+
+      const year = card.querySelector(".edit-year")?.value;
+      const format = card.querySelector(".edit-format")?.value;
+      const rating = card.querySelector(".edit-rating")?.value;
+      const pricePaid = card.querySelector(".edit-price")?.value;
+      const notes = card.querySelector(".edit-notes")?.value;
+
+      const payload = {
+        finishedYear: year,
+        format,
+        rating: rating === "" ? null : Number(rating),
+        pricePaid: pricePaid === "" ? null : Number(pricePaid),
+        notes: notes?.trim() || null,
+      };
+
+      const res = await fetch(`/api/library/${encodeURIComponent(userBookId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error ?? "Fehler beim Speichern.");
+        return;
+      }
+
+      // neu laden, damit alles konsistent ist (Filterlisten, Anzeige, etc.)
+      await loadLibrary();
+    });
   });
 }
 
-// ✅ Event Delegation: klappt auch nach Re-Render
-listEl?.addEventListener("click", async (e) => {
-  const btn = e.target.closest("[data-action]");
-  if (!btn) return;
+// Filter Events
+filterYear?.addEventListener("change", applyFilters);
+filterAuthor?.addEventListener("change", applyFilters);
+filterFormat?.addEventListener("change", applyFilters);
+searchText?.addEventListener("input", applyFilters);
 
-  const action = btn.getAttribute("data-action");
-  const card = btn.closest(".book-card");
-  if (!card) return;
-
-  const userBookId = card.getAttribute("data-userbookid");
-
-  if (action === "toggle") {
-    const details = card.querySelector(".book-details");
-    const headBtn = card.querySelector(".book-head");
-
-    if (!details || !headBtn) return;
-
-    const isHidden = details.hasAttribute("hidden");
-    if (isHidden) {
-      details.removeAttribute("hidden");
-      headBtn.setAttribute("aria-expanded", "true");
-      const openPill = card.querySelector(".pill-open");
-      if (openPill) openPill.textContent = "Details ▴";
-    } else {
-      details.setAttribute("hidden", "");
-      headBtn.setAttribute("aria-expanded", "false");
-      const openPill = card.querySelector(".pill-open");
-      if (openPill) openPill.textContent = "Details ▾";
-    }
-    return;
-  }
-
-  if (action === "delete") {
-    // Noch keine Route? Dann erstmal nur UX: bestätigen
-    const ok = confirm("Willst du dieses Buch wirklich löschen?");
-    if (!ok) return;
-
-    // Wenn du schon eine DELETE Route hast, sag Bescheid:
-    // await fetch(`/api/user-books/${userBookId}`, { method: "DELETE", credentials: "include" })
-
-    alert("Delete ist als nächstes dran (Route fehlt noch). Sag Bescheid, dann bauen wir sie.");
-    return;
-  }
-
-  if (action === "edit") {
-    alert("Edit ist als nächstes dran (Modal/Form + Route). Sag Bescheid, dann bauen wir’s.");
-    return;
-  }
+resetBtn?.addEventListener("click", () => {
+  if (filterYear) filterYear.value = "";
+  if (filterAuthor) filterAuthor.value = "";
+  if (filterFormat) filterFormat.value = "";
+  if (searchText) searchText.value = "";
+  applyFilters();
 });
 
-async function init() {
+// Start
+(async function init() {
   await requireLogin();
-
-  try {
-    allItems = await fetchLibraryFinished();
-    buildFilters(allItems);
-    wireFilterEvents();
-    applyFilters();
-  } catch (err) {
-    console.error(err);
-    setHint("Fehler beim Laden der Bibliothek.");
-  }
-}
-
-init();
+  await loadLibrary();
+})();

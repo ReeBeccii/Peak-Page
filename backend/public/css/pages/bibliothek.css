@@ -265,3 +265,120 @@ input[type="search"] {
     justify-content: flex-start;
   }
 }
+/* =========================================
+   Edit-Form (Bearbeiten) – Styling
+   ========================================= */
+
+/* wenn das Formular offen ist: mehr Abstand, klarere Trennung */
+.book-card.open .book-details {
+  display: grid;
+  gap: 14px;
+}
+
+/* Edit-Form Container */
+.edit-form {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(2px);
+}
+
+/* Detail-Zeilen im Formular: 2 Spalten, aber nicht so gequetscht */
+.edit-form .detail-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 10px;
+}
+
+/* Label-Spalte (links) */
+.edit-form .detail-row .k {
+  color: var(--gray-color);
+  font-size: 13px;
+  padding-top: 10px;
+}
+
+/* Inputs/Select/Textarea (rechts) */
+.edit-form input,
+.edit-form select,
+.edit-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.92);
+  color: #111;
+  outline: none;
+}
+
+/* Fokus schöner */
+.edit-form input:focus,
+.edit-form select:focus,
+.edit-form textarea:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+/* Textarea optisch */
+.edit-form textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* Buttons im Formular */
+.edit-form .details-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+/* Primärbutton (Speichern) */
+.btn-primary {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: var(--accent-color);
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+/* Abbrechen Button: etwas ruhiger */
+.edit-form .btn-secondary {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Bearbeiten/Löschen Buttons (außerhalb Edit-Form) weiterhin ok */
+.book-details .details-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Mobile: Labels oben statt links */
+@media (max-width: 700px) {
+  .edit-form .detail-row {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-form .detail-row .k {
+    padding-top: 0;
+  }
+
+  .edit-form .details-actions {
+    justify-content: stretch;
+  }
+
+  .edit-form .details-actions button {
+    flex: 1;
+  }
+}
