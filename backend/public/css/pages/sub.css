@@ -204,7 +204,7 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
 .btn-primary:hover { filter: brightness(1.1); }
 
 /* ===============================
-   Edit-Form (SuB) – hübscher & kompakter
+   Edit-Form (SuB) 
    =============================== */
 
 .edit-form {
@@ -237,18 +237,61 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   width: 100%;
 }
 
-/* Inputs: nicht mehr knallweiß, sondern "soft" */
 .edit-form input,
 .edit-form select,
 .edit-form textarea {
   width: 100%;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--text-color);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+
+  /* wie Bibliothek: helle Felder, dunkler Text */
+  background: rgba(255, 255, 255, 0.92);
+  color: #111;
+
   outline: none;
-  box-sizing: border-box;
+}
+
+/* ✅ wichtig: Dropdown-Einträge auch lesbar machen */
+.edit-form select option,
+.edit-form select optgroup {
+  background: #fff;
+  color: #111;
+}
+
+/* optional: Fokus etwas schöner */
+.edit-form input:focus,
+.edit-form select:focus,
+.edit-form textarea:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+.edit-form input,
+.edit-form select,
+.edit-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+
+  /* wie Bibliothek: helle Felder, dunkler Text */
+  background: rgba(255, 255, 255, 0.92);
+  color: #111;
+
+  outline: none;
+}
+
+/* ✅ wichtig: Dropdown-Einträge auch lesbar machen */
+.edit-form select option,
+.edit-form select optgroup {
+  background: #fff;
+  color: #111;
+}
+
+/* optional: Fokus etwas schöner */
+.edit-form input:focus,
+.edit-form select:focus,
+.edit-form textarea:focus {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
 }
 
 /* Placeholder / Auswahltext */

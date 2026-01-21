@@ -169,4 +169,8 @@
     aspect-ratio: auto;
     height: 130px;
   }
+
+  .tile.tile-wide {
+    height: auto;
+  }
 }
