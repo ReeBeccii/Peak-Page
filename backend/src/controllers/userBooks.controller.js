@@ -12,25 +12,30 @@ export async function listUserBooks(req, res) {
 
   const rows = await dbAll(
     `SELECT
-       ub.id,
-       ub.user_id,
-       ub.book_id,
-       ub.format_id,
-       ub.status,
-       ub.rating,
-       ub.notes,
-       ub.price_paid,
-       ub.started_at,
-       ub.finished_at,
-       ub.last_read_at,
-       b.title,
-       b.isbn13,
-       b.cover_url,
-       b.default_price
-     FROM user_books ub
-     JOIN books b ON b.id = ub.book_id
-     WHERE ub.user_id = ?
-     ORDER BY ub.id DESC`,
+     ub.id,
+     ub.user_id,
+     ub.book_id,
+     ub.format_id,
+     ub.status,
+     ub.rating,
+     ub.notes,
+     ub.price_paid,
+     ub.started_at,
+     ub.finished_at,
+     ub.last_read_at,
+     b.title,
+     b.isbn13,
+     b.cover_url,
+     b.default_price,
+     -- ✅ Autor(en) als Text dazupacken
+     COALESCE(GROUP_CONCAT(a.name, ', '), '') AS author
+   FROM user_books ub
+   JOIN books b ON b.id = ub.book_id
+   LEFT JOIN book_authors ba ON ba.book_id = b.id
+   LEFT JOIN authors a ON a.id = ba.author_id
+   WHERE ub.user_id = ?
+   GROUP BY ub.id
+   ORDER BY ub.id DESC`,
     [userId]
   );
 

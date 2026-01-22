@@ -36,7 +36,9 @@ showCover(null);
 function fillIfEmpty(inputId, value) {
   const el = document.getElementById(inputId);
   if (!el) return;
-  if (!el.value.trim() && value) el.value = value;
+  if (!String(el.value || "").trim() && value !== undefined && value !== null && String(value).trim() !== "") {
+    el.value = String(value);
+  }
 }
 
 // Cover anzeigen (mit Fallback)
@@ -53,6 +55,45 @@ function showCover(url) {
 
   coverPreview.src = finalUrl;
 }
+
+// ==============================
+// ✅ Status steuert Lesejahr + Bewertung
+// ==============================
+document.addEventListener("DOMContentLoaded", () => {
+  const statusSelect = document.getElementById("status");
+  const readYearInput = document.getElementById("readYear");
+  const ratingSelect = document.getElementById("rating");
+
+  if (!statusSelect) return;
+
+  function updateReadFields() {
+    const isFinished = statusSelect.value === "finished";
+    const currentYear = new Date().getFullYear();
+
+    // Lesejahr aktivieren/deaktivieren
+    if (readYearInput) {
+      readYearInput.disabled = !isFinished;
+
+      if (!isFinished) {
+        readYearInput.value = "";
+      } else {
+        // ✅ nur setzen, wenn noch nix drin steht (überschreibt NICHT manuelle Eingabe)
+        if (!String(readYearInput.value || "").trim()) {
+          readYearInput.value = String(currentYear);
+        }
+      }
+    }
+
+    // Bewertung aktivieren/deaktivieren
+    if (ratingSelect) {
+      ratingSelect.disabled = !isFinished;
+      if (!isFinished) ratingSelect.value = "";
+    }
+  }
+
+  updateReadFields();
+  statusSelect.addEventListener("change", updateReadFields);
+});
 
 // ✅ ISBN suchen → Google Books → Formular befüllen
 isbnBtn?.addEventListener("click", async () => {
@@ -88,7 +129,10 @@ isbnBtn?.addEventListener("click", async () => {
       : (book.author ?? "");
 
     fillIfEmpty("author", authorText);
-    fillIfEmpty("year", book.publishedYear ? String(book.publishedYear) : "");
+
+    // ✅ FIX: Erscheinungsjahr geht in publishedYear (nicht "year")
+    fillIfEmpty("publishedYear", book.publishedYear ? String(book.publishedYear) : "");
+
     fillIfEmpty("isbn", book.isbn);
 
     // ✅ Cover merken + anzeigen
@@ -107,35 +151,55 @@ isbnBtn?.addEventListener("click", async () => {
 form?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  // ✅ Status ist Pflicht (unread | finished)
+  // Status Pflicht (unread | finished)
   const statusEl = document.getElementById("status");
   const status = statusEl ? statusEl.value : null;
 
-  // ✅ Rating optional (1..5 oder leer)
+  // Rating optional
   const ratingEl = document.getElementById("rating");
   const ratingRaw = ratingEl ? ratingEl.value : "";
-  const rating =
+  let rating =
     ratingRaw !== null && String(ratingRaw).trim() !== ""
       ? Number(ratingRaw)
       : null;
+
+  // Lesejahr optional
+  const readYearEl = document.getElementById("readYear");
+  const readYearRaw = readYearEl ? readYearEl.value : "";
+  let readYear =
+    readYearRaw !== null && String(readYearRaw).trim() !== ""
+      ? Number(readYearRaw)
+      : null;
+
+  // Wenn ungelesen: Rating + Lesejahr null
+  if (status === "unread") {
+    rating = null;
+    readYear = null;
+  }
 
   const payload = {
     title: document.getElementById("title")?.value.trim(),
     author: document.getElementById("author")?.value.trim(),
     isbn: document.getElementById("isbn")?.value.trim() || null,
-    year: document.getElementById("year")?.value
-      ? Number(document.getElementById("year").value)
+
+    // ✅ FIX: publishedYear statt year
+    publishedYear: document.getElementById("publishedYear")?.value
+      ? Number(document.getElementById("publishedYear").value)
       : null,
+
     price: document.getElementById("price")?.value
       ? Number(document.getElementById("price").value)
       : null,
+
     format: document.getElementById("format")?.value,
     notes: document.getElementById("notes")?.value.trim() || null,
 
-    // ✅ NEU: Status + Rating + CoverUrl mitschicken
     status,
     rating,
     coverUrl: lastCoverUrl,
+
+    // ✅ readYear mitschicken
+    readYear,
   };
 
   if (!payload.title || !payload.author) {

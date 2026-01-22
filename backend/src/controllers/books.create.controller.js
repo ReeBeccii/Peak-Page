@@ -1,156 +1,160 @@
 // src/controllers/books.create.controller.js
-
 import { dbGet, dbRun } from "../db/db.js";
 
-/**
- * POST /api/books
- * Erwartet (JSON):
- * {
- *   title, author,
- *   isbn?, year?, price?, format, notes?,
- *   status: "unread" | "finished",
- *   rating?: 1..5,
- *   coverUrl?: string
- * }
- */
-export async function createBook(req, res) {
-  try {
-    // 1) Login check
-    const userId = req.session?.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: "Nicht eingeloggt." });
-    }
-
-    // 2) Input
-    const {
-      title,
-      author,
-      isbn,
-      price,
-      format,
-      notes,
-      status,
-      rating,
-      coverUrl,
-    } = req.body ?? {};
-
-    if (!title?.trim() || !author?.trim()) {
-      return res.status(400).json({ error: "Titel und Autor:in sind Pflichtfelder." });
-    }
-
-    // status Pflichtfeld
-    const allowedStatus = new Set(["unread", "finished"]);
-    if (!status || !allowedStatus.has(status)) {
-      return res.status(400).json({ error: "Ungültiger Status. Erlaubt: unread, finished." });
-    }
-
-    // rating optional (1..5)
-    let ratingValue = null;
-    if (rating !== undefined && rating !== null && String(rating).trim() !== "") {
-      const n = Number(rating);
-      if (!Number.isInteger(n) || n < 1 || n > 5) {
-        return res.status(400).json({ error: "Rating muss eine Zahl von 1 bis 5 sein." });
-      }
-      ratingValue = n;
-    }
-
-    // 3) Format -> format_id (an deine formats Tabelle anpassen)
-    async function getFormatId(formatValue) {
-      // häufigste Variante: name enthält "paperback", "hardcover", ...
-      const row = await dbGet("SELECT id FROM formats WHERE name = ? LIMIT 1", [formatValue]);
-      if (row?.id) return row.id;
-
-      // fallback: irgendein erster Eintrag
-      const fallback = await dbGet("SELECT id FROM formats ORDER BY id ASC LIMIT 1");
-      if (fallback?.id) return fallback.id;
-
-      throw new Error("formats Tabelle ist leer – kein format_id möglich.");
-    }
-
-    const formatId = await getFormatId(format);
-
-    // 4) Book upsert in books (WICHTIG: bei dir heißt es isbn13!)
-    // books columns: id, isbn13, title, cover_url, default_price, created_at
-    const cleanIsbn = isbn?.trim() || null;
-
-    let book = null;
-    if (cleanIsbn) {
-      book = await dbGet("SELECT id FROM books WHERE isbn13 = ? LIMIT 1", [cleanIsbn]);
-    }
-
-    // Fallback: Titel
-    if (!book) {
-      book = await dbGet("SELECT id FROM books WHERE title = ? LIMIT 1", [title.trim()]);
-    }
-
-    let bookId = book?.id;
-
-    if (!bookId) {
-      const insert = await dbRun(
-        "INSERT INTO books (isbn13, title, cover_url, default_price) VALUES (?, ?, ?, ?)",
-        [
-          cleanIsbn,
-          title.trim(),
-          coverUrl ? String(coverUrl).replace(/^http:\/\//, "https://") : null,
-          price ?? null,
-        ]
-      );
-      bookId = insert.lastID;
-    } else {
-      // optional: wenn es schon existiert, aber cover_url leer ist -> nachpflegen
-      if (coverUrl) {
-        await dbRun(
-          "UPDATE books SET cover_url = COALESCE(cover_url, ?) WHERE id = ?",
-          [String(coverUrl).replace(/^http:\/\//, "https://"), bookId]
-        );
-      }
-    }
-
-    // 5) Author upsert + book_authors
-    const authorName = author.trim();
-
-    let authorRow = await dbGet("SELECT id FROM authors WHERE name = ? LIMIT 1", [authorName]);
-    if (!authorRow) {
-      const insAuthor = await dbRun("INSERT INTO authors (name) VALUES (?)", [authorName]);
-      authorRow = { id: insAuthor.lastID };
-    }
-
-    const linkExists = await dbGet(
-      "SELECT 1 FROM book_authors WHERE book_id = ? AND author_id = ? LIMIT 1",
-      [bookId, authorRow.id]
-    );
-    if (!linkExists) {
-      await dbRun("INSERT INTO book_authors (book_id, author_id) VALUES (?, ?)", [bookId, authorRow.id]);
-    }
-
-    // 6) user_books anlegen (status + rating + notes + price_paid)
-    // finished_at setzen wenn finished
-    const finishedAtSql = status === "finished" ? "datetime('now')" : "NULL";
-
-    const sql = `
-      INSERT INTO user_books
-        (user_id, book_id, format_id, status, rating, notes, price_paid, finished_at)
-      VALUES
-        (?, ?, ?, ?, ?, ?, ?, ${finishedAtSql})
-    `;
-
-    const insUserBook = await dbRun(sql, [
-      userId,
-      bookId,
-      formatId,
-      status,
-      ratingValue,
-      notes?.trim() || null,
-      price ?? null,
-    ]);
-
-    return res.status(201).json({
-      ok: true,
-      userBookId: insUserBook.lastID,
-      bookId,
-    });
-  } catch (err) {
-    console.error("❌ createBook Fehler:", err);
-    return res.status(500).json({ error: "Serverfehler beim Speichern." });
+function requireUser(req, res) {
+  const user = req.session?.user;
+  if (!user?.id) {
+    res.status(401).json({ error: "Nicht eingeloggt." });
+    return null;
   }
+  return user;
+}
+
+function parseAuthors(authorRaw) {
+  // erlaubt: "Sebastian Fitzek" oder "A, B, C"
+  return String(authorRaw || "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+export async function createBook(req, res) {
+  const user = requireUser(req, res);
+  if (!user) return;
+
+  const {
+    title,
+    author,        // kommt aus dem Frontend als Text
+    isbn,
+    coverUrl,
+    price,
+    format,
+    notes,
+    status,
+    rating,
+    readYear,      // Lesejahr (Jahr-Zahl)
+    // publishedYear -> wird bewusst NICHT in books gespeichert (weil deine DB-Spalte nicht existiert)
+  } = req.body ?? {};
+
+  if (!title || !author) {
+    return res.status(400).json({ error: "Titel und Autor:in sind Pflichtfelder." });
+  }
+
+  const allowedStatus = new Set(["unread", "finished"]);
+  if (!allowedStatus.has(status)) {
+    return res.status(400).json({ error: "Ungültiger Status. Erlaubt: unread, finished." });
+  }
+
+  if (rating !== undefined && rating !== null) {
+    if (typeof rating !== "number" || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: "Bewertung muss zwischen 1 und 5 liegen." });
+    }
+  }
+
+  // 1) Buch finden oder anlegen (NUR mit Spalten, die es sicher gibt!)
+  let bookRow = null;
+
+  if (isbn) {
+    bookRow = await dbGet(`SELECT id FROM books WHERE isbn13 = ?`, [String(isbn)]);
+  }
+
+  if (!bookRow) {
+    const insertBook = await dbRun(
+      `
+      INSERT INTO books (isbn13, title, cover_url, default_price)
+      VALUES (?, ?, ?, ?)
+      `,
+      [
+        isbn ? String(isbn) : null,
+        String(title),
+        coverUrl ? String(coverUrl) : null,
+        price !== undefined && price !== null ? Number(price) : null,
+      ]
+    );
+
+    bookRow = { id: insertBook.lastID };
+  }
+
+  // 2) Autor(en) in authors + Mapping-Tabelle schreiben (damit Bibliothek/SuB sie wieder anzeigen können)
+  const authors = parseAuthors(author);
+
+  // --- HIER ggf. Tabellennamen anpassen: authors und book_authors ---
+  for (const name of authors) {
+    // author upsert-ish
+    let a = await dbGet(`SELECT id FROM authors WHERE name = ? LIMIT 1`, [name]);
+    if (!a) {
+      const insA = await dbRun(`INSERT INTO authors (name) VALUES (?)`, [name]);
+      a = { id: insA.lastID };
+    }
+
+    // mapping upsert-ish (kein Duplikat)
+    const existingLink = await dbGet(
+      `SELECT 1 FROM book_authors WHERE book_id = ? AND author_id = ? LIMIT 1`,
+      [bookRow.id, a.id]
+    );
+
+    if (!existingLink) {
+      await dbRun(
+        `INSERT INTO book_authors (book_id, author_id) VALUES (?, ?)`,
+        [bookRow.id, a.id]
+      );
+    }
+  }
+  // --- ENDE Mapping ---
+
+  // 3) format_id auflösen
+  let formatId = null;
+  if (format) {
+    const f = await dbGet(`SELECT id FROM formats WHERE name = ? LIMIT 1`, [String(format)]);
+    if (f?.id) formatId = f.id;
+  }
+
+  // 4) finished_at berechnen (Lesejahr korrekt übernehmen!)
+  let finishedAt = null;
+
+  if (status === "finished") {
+    if (readYear !== undefined && readYear !== null && Number.isFinite(Number(readYear))) {
+      finishedAt = `${Number(readYear)}-01-01`;
+    } else {
+      finishedAt = "AUTO_NOW";
+    }
+  } else {
+    finishedAt = null;
+  }
+
+  let finishedAtSql = "?";
+  let finishedAtParam = finishedAt;
+
+  if (finishedAt === "AUTO_NOW") {
+    finishedAtSql = "datetime('now')";
+    finishedAtParam = null;
+  }
+
+  const finalRating = status === "finished" ? (rating ?? null) : null;
+
+  const ub = await dbRun(
+    `
+    INSERT INTO user_books
+      (user_id, book_id, status, rating, notes, price_paid, format_id, finished_at)
+    VALUES
+      (?, ?, ?, ?, ?, ?, ?, ${finishedAtSql})
+    `,
+    [
+      user.id,
+      bookRow.id,
+      status,
+      finalRating,
+      notes ?? null,
+      price !== undefined && price !== null ? Number(price) : null,
+      formatId,
+      ...(finishedAtSql === "?" ? [finishedAtParam] : []),
+    ]
+  );
+
+  return res.status(201).json({
+    ok: true,
+    book_id: bookRow.id,
+    user_book_id: ub.lastID,
+    message: "Buch gespeichert ✅",
+  });
 }

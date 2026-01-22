@@ -92,26 +92,38 @@
             </div>
           </div>
 
-          <!-- Jahr + Preis -->
+          <!-- Erscheinungsjahr + Lesejahr -->
           <div class="grid-2">
             <div>
-              <label for="year">Erscheinungsjahr</label>
-              <input id="year" name="year" type="number" min="0" max="9999" />
+              <label for="publishedYear">Erscheinungsjahr</label>
+              <input type="number" id="publishedYear" name="publishedYear" placeholder="z.B. 2022" />
             </div>
+
             <div>
-              <label for="price">Preis (€)</label>
-              <input id="price" name="price" type="number" step="0.01" min="0" />
+              <label for="readYear">Lesejahr</label>
+              <input type="number" id="readYear" name="readYear" placeholder="z.B. 2026" />
             </div>
           </div>
 
-          <!-- Format -->
-          <label for="format">Format</label>
-          <select id="format" name="format">
-            <option value="paperback">Taschenbuch</option>
-            <option value="hardcover">Hardcover</option>
-            <option value="ebook">eBook</option>
-            <option value="audio">Hörbuch</option>
-          </select>
+
+          <!--  Format + Preis -->
+          <div class="grid-2">
+            <div>
+              <label for="format">Format</label>
+              <select id="format" name="format">
+                <option value="paperback">Taschenbuch</option>
+                <option value="hardcover">Hardcover</option>
+                <option value="ebook">eBook</option>
+                <option value="audio">Hörbuch</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="price">Preis (€)</label>
+              <input type="number" id="price" name="price" step="0.01" />
+            </div>
+          </div>
+
 
           <!-- Notizen -->
           <label for="notes">Notizen</label>
