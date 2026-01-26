@@ -1,3 +1,6 @@
+/* =========================
+   Seiten-Layout & Titel
+   ========================= */
 .page {
   padding: 28px 18px 110px;
 }
@@ -7,6 +10,9 @@
   margin: 16px 0 24px;
 }
 
+/* =========================
+   Filter- & Formular-Card
+   ========================= */
 .card {
   max-width: 980px;
   margin: 0 auto 16px;
@@ -17,13 +23,23 @@
   backdrop-filter: blur(2px);
 }
 
+/* =========================
+   Formular-Beschriftungen
+   ========================= */
 label {
   display: block;
   margin: 0 0 6px;
   color: var(--gray-color);
 }
 
-select, input[type="search"], input[type="number"], input[type="text"], textarea {
+/* =========================
+   Formular-Eingaben
+   ========================= */
+select,
+input[type="search"],
+input[type="number"],
+input[type="text"],
+textarea {
   width: 100%;
   padding: 10px 12px;
   border-radius: 12px;
@@ -31,6 +47,9 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   outline: none;
 }
 
+/* =========================
+   Filter-Layout (Grid)
+   ========================= */
 .filters-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -45,6 +64,9 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   align-items: center;
 }
 
+/* =========================
+   Sekundärer Button
+   ========================= */
 .btn-secondary {
   border: none;
   border-radius: 14px;
@@ -58,6 +80,9 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   filter: brightness(1.1);
 }
 
+/* =========================
+   Hinweis- & Statusanzeige
+   ========================= */
 .hint {
   margin-top: 12px;
   min-height: 20px;
@@ -65,7 +90,9 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   opacity: 0.9;
 }
 
-/* Liste */
+/* =========================
+   Buchliste
+   ========================= */
 .list {
   max-width: 980px;
   margin: 0 auto;
@@ -73,7 +100,9 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   gap: 12px;
 }
 
-/* Buchkarte */
+/* =========================
+   Buchkarte
+   ========================= */
 .book-card {
   background: rgba(80, 27, 29, 0.75);
   border: 1px solid var(--accent-color);
@@ -82,7 +111,9 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   backdrop-filter: blur(2px);
 }
 
-/* Klickbarer Kopf */
+/* =========================
+   Buchkopf (klickbarer Bereich)
+   ========================= */
 .book-head {
   all: unset;
   cursor: pointer;
@@ -101,7 +132,9 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   background: rgba(255, 255, 255, 0.04);
 }
 
-/* Cover */
+/* =========================
+   Buch-Cover
+   ========================= */
 .book-cover {
   width: 60px;
   height: 90px;
@@ -111,7 +144,9 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   background: #fff;
 }
 
-/* Text */
+/* =========================
+   Buch-Textbereich
+   ========================= */
 .book-main {
   display: flex;
   flex-direction: column;
@@ -134,7 +169,9 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   color: var(--gray-color);
 }
 
-/* Rechte Seite */
+/* =========================
+   Rechte Spalte (Status & Aktionen)
+   ========================= */
 .book-side {
   display: flex;
   flex-direction: column;
@@ -142,6 +179,9 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   align-items: flex-end;
 }
 
+/* =========================
+   Status-Pill
+   ========================= */
 .pill {
   font-size: 13px;
   padding: 6px 10px;
@@ -151,7 +191,9 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   color: var(--text-color);
 }
 
-/* Aufklapp-Bereich */
+/* =========================
+   Buchdetails (aufklappbar)
+   ========================= */
 .book-details {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   padding: 14px;
@@ -180,7 +222,9 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   justify-content: flex-end;
 }
 
-/* Danger Button */
+/* =========================
+   Gefahren-Button (Löschen)
+   ========================= */
 .btn-danger {
   background: #5c1f1f;
   color: #fff;
@@ -189,9 +233,14 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   padding: 8px 12px;
   cursor: pointer;
 }
-.btn-danger:hover { filter: brightness(1.1); }
 
-/* Primärbutton */
+.btn-danger:hover {
+  filter: brightness(1.1);
+}
+
+/* =========================
+   Primärbutton
+   ========================= */
 .btn-primary {
   border: none;
   border-radius: 14px;
@@ -201,22 +250,26 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   color: #fff;
   font-weight: 600;
 }
-.btn-primary:hover { filter: brightness(1.1); }
 
-/* ===============================
-   Edit-Form (SuB) 
-   =============================== */
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
 
+/* =========================
+   Edit-Formular (SuB)
+   ========================= */
 .edit-form {
   margin-top: 12px;
   padding: 16px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(80, 27, 29, 0.35); /* mehr "Peak&Page" statt graues Feld */
+  background: rgba(80, 27, 29, 0.35);
   backdrop-filter: blur(3px);
 }
 
-/* Grid: Label links schmaler, Feld rechts */
+/* =========================
+   Edit-Form Layout (Label + Feld)
+   ========================= */
 .edit-form .detail-row {
   display: grid;
   grid-template-columns: 120px 1fr;
@@ -229,7 +282,7 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   color: var(--gray-color);
   font-size: 13px;
   line-height: 1.2;
-  padding: 0;               /* weg mit dem "runtergeschobenen" Label */
+  padding: 0;
   opacity: 0.95;
 }
 
@@ -237,6 +290,9 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   width: 100%;
 }
 
+/* =========================
+   Eingabefelder im Edit-Form
+   ========================= */
 .edit-form input,
 .edit-form select,
 .edit-form textarea {
@@ -244,63 +300,32 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-
-  /* wie Bibliothek: helle Felder, dunkler Text */
   background: rgba(255, 255, 255, 0.92);
   color: #111;
-
   outline: none;
 }
 
-/* ✅ wichtig: Dropdown-Einträge auch lesbar machen */
+/* Dropdown-Einträge lesbar halten */
 .edit-form select option,
 .edit-form select optgroup {
   background: #fff;
   color: #111;
 }
 
-/* optional: Fokus etwas schöner */
-.edit-form input:focus,
-.edit-form select:focus,
-.edit-form textarea:focus {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
-}
-.edit-form input,
-.edit-form select,
-.edit-form textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-
-  /* wie Bibliothek: helle Felder, dunkler Text */
-  background: rgba(255, 255, 255, 0.92);
-  color: #111;
-
-  outline: none;
-}
-
-/* ✅ wichtig: Dropdown-Einträge auch lesbar machen */
-.edit-form select option,
-.edit-form select optgroup {
-  background: #fff;
-  color: #111;
-}
-
-/* optional: Fokus etwas schöner */
+/* Fokus-Styling */
 .edit-form input:focus,
 .edit-form select:focus,
 .edit-form textarea:focus {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
 }
 
-/* Placeholder / Auswahltext */
+/* Placeholder */
 .edit-form input::placeholder,
 .edit-form textarea::placeholder {
   color: rgba(255, 255, 255, 0.65);
 }
 
-/* Fokus = leichter Glow */
+/* Fokus: zusätzlicher Glow */
 .edit-form input:focus,
 .edit-form select:focus,
 .edit-form textarea:focus {
@@ -308,14 +333,16 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
 }
 
-/* Textarea */
+/* Textarea-Anpassungen */
 .edit-form textarea {
   min-height: 90px;
   resize: vertical;
   line-height: 1.4;
 }
 
-/* Buttons unten rechts, gleich hoch */
+/* =========================
+   Edit-Form Aktionen
+   ========================= */
 .edit-form .details-actions {
   display: flex;
   gap: 10px;
@@ -327,8 +354,12 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
   min-width: 120px;
 }
 
-/* Mobile: alles untereinander, Buttons full width */
+/* =========================
+   Responsive Anpassungen
+   ========================= */
 @media (max-width: 820px) {
+
+  /* Edit-Form untereinander */
   .edit-form .detail-row {
     grid-template-columns: 1fr;
     gap: 6px;
@@ -338,9 +369,8 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
     flex: 1;
     min-width: 0;
   }
-}
 
-@media (max-width: 820px) {
+  /* Filter & Liste */
   .filters-grid {
     grid-template-columns: 1fr;
   }
@@ -349,6 +379,7 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
     grid-template-columns: 1fr;
   }
 
+  /* Buchlayout */
   .book-head {
     grid-template-columns: 60px 1fr;
   }
@@ -358,13 +389,5 @@ select, input[type="search"], input[type="number"], input[type="text"], textarea
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
-  }
-
-  .edit-form .detail-row {
-    grid-template-columns: 1fr;
-  }
-
-  .edit-form .details-actions button {
-    flex: 1;
   }
 }

@@ -1,3 +1,6 @@
+/* =========================
+   Basis-Reset & globale Variablen
+   ========================= */
 * {
   margin: 0;
   padding: 0;
@@ -5,12 +8,18 @@
   --footer-height: 80px;
 }
 
+/* =========================
+   Dokument-Grundlage
+   ========================= */
 html, body {
   height: 100%;
   overscroll-behavior: none;
   
 }
 
+/* =========================
+   Body-Layout & Typografie
+   ========================= */
 body {
   min-height: 100svh;
   display: flex;
@@ -23,12 +32,17 @@ body {
   overflow-x: hidden;
   padding-bottom: 0;
 }
+
+/* =========================
+   Hauptbereich: füllt den verfügbaren Platz
+   ========================= */
 main.page {
   flex: 1;
 }
 
-
-/* Main Background Bibliothek */
+/* =========================
+   Hintergrund: Bibliothek (fixiert, hinter dem Content)
+   ========================= */
 .background {
   position: fixed;
   inset: 0;

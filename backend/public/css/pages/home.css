@@ -1,3 +1,6 @@
+/* =========================
+   Seiten-Layout & Titel
+   ========================= */
 .page {
   padding: 28px 18px 110px;
   /* unten Platz für Footer */
@@ -8,7 +11,10 @@
   margin: 16px 0 24px;
 }
 
-/* Dashboard Layout: 2 nebeneinander, quadratisch, zentriert */
+/* =========================
+   Dashboard (Variante 1: Grid + Kacheln)
+   ========================= */
+/* Layout: 2 nebeneinander, zentriert */
 .dashboard-grid {
   max-width: 980px;
   margin: 0 auto;
@@ -17,7 +23,7 @@
   gap: 16px;
 }
 
-/* Kachel quadratisch */
+/* Dashboard-Kachel (quadratisch, Inhalt zentriert) */
 .dash-card {
   aspect-ratio: 1 / 1;
   background: rgba(80, 27, 29, 0.75);
@@ -34,7 +40,9 @@
   text-align: center;
 }
 
-/* --- Zuletzt gelesen: Mini-Buchkarte in der Kachel --- */
+/* =========================
+   Zuletzt gelesen (Mini-Buchkarte in der Kachel)
+   ========================= */
 .last-read {
   width: 100%;
   height: 100%;
@@ -82,7 +90,9 @@
   white-space: nowrap;
 }
 
-
+/* =========================
+   Dashboard-Kachel: Überschrift & Werte
+   ========================= */
 /* Titel etwas kleiner, Wert prominent */
 .dash-card h3 {
   margin: 0 0 10px;
@@ -105,6 +115,9 @@
   max-width: 90%;
 }
 
+/* =========================
+   Responsive Anpassungen (Variante 1)
+   ========================= */
 /* Mobile: 1 Spalte */
 @media (max-width: 820px) {
   .dashboard-grid {
@@ -117,7 +130,10 @@
   }
 }
 
-/* Dashboard: 2 nebeneinander, Kacheln quadratisch, Inhalt zentriert */
+/* =========================
+   Dashboard (Variante 2: .dashboard + .tile)
+   ========================= */
+/* Layout: 2 nebeneinander, Inhalt zentriert */
 .dashboard {
   max-width: 980px;
   margin: 0 auto;
@@ -159,6 +175,9 @@
   line-height: 1;
 }
 
+/* =========================
+   Responsive Anpassungen (Variante 2)
+   ========================= */
 /* Mobile: 1 Spalte, nicht-quadratisch (damit’s besser passt) */
 @media (max-width: 820px) {
   .dashboard {

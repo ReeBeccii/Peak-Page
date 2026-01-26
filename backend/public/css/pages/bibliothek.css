@@ -1,5 +1,8 @@
+/* =========================
+   Seiten-Layout & Titel
+   ========================= */
 .page {
-  padding: 28px 18px 110px; /* Platz für Footer */
+  padding: 28px 18px 110px; /* zusätzlicher Platz für den Footer */
 }
 
 .page-title {
@@ -7,7 +10,9 @@
   margin: 16px 0 24px;
 }
 
-/* ===== Filter Card ===== */
+/* =========================
+   Filter-Bereich (Card)
+   ========================= */
 .card {
   max-width: 980px;
   margin: 0 auto 16px;
@@ -18,12 +23,18 @@
   backdrop-filter: blur(2px);
 }
 
+/* =========================
+   Formular-Beschriftungen
+   ========================= */
 label {
   display: block;
   margin: 0 0 6px;
   color: var(--gray-color);
 }
 
+/* =========================
+   Filter-Eingaben
+   ========================= */
 select,
 input[type="search"] {
   width: 100%;
@@ -33,6 +44,9 @@ input[type="search"] {
   outline: none;
 }
 
+/* =========================
+   Filter-Layout (Grid)
+   ========================= */
 .filters-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -47,6 +61,9 @@ input[type="search"] {
   align-items: center;
 }
 
+/* =========================
+   Sekundärer Button (Filter)
+   ========================= */
 .btn-secondary {
   border: none;
   border-radius: 14px;
@@ -60,6 +77,9 @@ input[type="search"] {
   filter: brightness(1.1);
 }
 
+/* =========================
+   Hinweis- & Statusanzeige
+   ========================= */
 .hint {
   margin-top: 12px;
   min-height: 20px;
@@ -67,7 +87,9 @@ input[type="search"] {
   opacity: 0.9;
 }
 
-/* ===== Liste ===== */
+/* =========================
+   Buchliste
+   ========================= */
 .list {
   max-width: 980px;
   margin: 0 auto;
@@ -76,7 +98,9 @@ input[type="search"] {
   gap: 16px;
 }
 
-/* ===== Buchkarte ===== */
+/* =========================
+   Buchkarte (Container)
+   ========================= */
 .book-card {
   background: rgba(80, 27, 29, 0.75);
   border: 1px solid var(--accent-color);
@@ -85,7 +109,9 @@ input[type="search"] {
   backdrop-filter: blur(2px);
 }
 
-/* Klickbarer Kopf (Button) */
+/* =========================
+   Buchkopf (klickbarer Bereich)
+   ========================= */
 .book-head {
   all: unset;
   cursor: pointer;
@@ -95,7 +121,6 @@ input[type="search"] {
   grid-template-columns: 80px 1fr 240px;
   gap: 18px;
   align-items: center;
-
   padding: 16px 18px;
 }
 
@@ -103,7 +128,9 @@ input[type="search"] {
   background: rgba(255, 255, 255, 0.04);
 }
 
-/* Cover */
+/* =========================
+   Buch-Cover
+   ========================= */
 .book-cover {
   width: 70px;
   height: 100px;
@@ -113,7 +140,9 @@ input[type="search"] {
   background: rgba(0, 0, 0, 0.15);
 }
 
-/* Textbereich */
+/* =========================
+   Buch-Textbereich
+   ========================= */
 .book-main {
   display: flex;
   flex-direction: column;
@@ -138,7 +167,9 @@ input[type="search"] {
   opacity: 0.9;
 }
 
-/* rechte Spalte */
+/* =========================
+   Rechte Spalte (Status & Aktionen)
+   ========================= */
 .book-side {
   display: flex;
   flex-direction: column;
@@ -147,6 +178,9 @@ input[type="search"] {
   text-align: auto;
 }
 
+/* =========================
+   Status-Pill
+   ========================= */
 .pill {
   display: inline-flex;
   align-items: center;
@@ -168,8 +202,10 @@ input[type="search"] {
   background: rgba(80, 27, 29, 0.35);
 }
 
-/* ===== Details (aufklappbar) ===== */
-/* In JS wird mit hidden ein/ausgeschaltet */
+/* =========================
+   Buchdetails (aufklappbar)
+   ========================= */
+/* Sichtbarkeit wird per JS über hidden gesteuert */
 .book-details {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   padding: 14px 18px 18px;
@@ -201,7 +237,9 @@ input[type="search"] {
   align-items: center;
 }
 
-/* Buttons in Details */
+/* =========================
+   Buttons in Buchdetails
+   ========================= */
 .btn-primary {
   border: none;
   border-radius: 14px;
@@ -228,7 +266,9 @@ input[type="search"] {
   filter: brightness(1.1);
 }
 
-/* ===== Responsive ===== */
+/* =========================
+   Responsive Anpassungen
+   ========================= */
 @media (max-width: 820px) {
   .filters-grid {
     grid-template-columns: 1fr;
@@ -265,17 +305,20 @@ input[type="search"] {
     justify-content: flex-start;
   }
 }
-/* =========================================
-   Edit-Form (Bearbeiten) – Styling
-   ========================================= */
 
-/* wenn das Formular offen ist: mehr Abstand, klarere Trennung */
+/* =========================
+   Edit-Formular (Bearbeiten)
+   ========================= */
+
+/* Geöffnete Buchkarte: mehr Abstand & Struktur */
 .book-card.open .book-details {
   display: grid;
   gap: 14px;
 }
 
-/* Edit-Form Container */
+/* =========================
+   Edit-Form Container
+   ========================= */
 .edit-form {
   margin-top: 12px;
   padding: 14px;
@@ -285,7 +328,9 @@ input[type="search"] {
   backdrop-filter: blur(2px);
 }
 
-/* Detail-Zeilen im Formular: 2 Spalten, aber nicht so gequetscht */
+/* =========================
+   Edit-Form Detail-Zeilen
+   ========================= */
 .edit-form .detail-row {
   display: grid;
   grid-template-columns: 140px 1fr;
@@ -301,7 +346,9 @@ input[type="search"] {
   padding-top: 10px;
 }
 
-/* Inputs/Select/Textarea (rechts) */
+/* =========================
+   Eingabefelder im Edit-Form
+   ========================= */
 .edit-form input,
 .edit-form select,
 .edit-form textarea {
@@ -314,7 +361,7 @@ input[type="search"] {
   outline: none;
 }
 
-/* Fokus schöner */
+/* Fokus-Styling */
 .edit-form input:focus,
 .edit-form select:focus,
 .edit-form textarea:focus {
@@ -322,13 +369,15 @@ input[type="search"] {
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
 }
 
-/* Textarea optisch */
+/* Textarea-Anpassungen */
 .edit-form textarea {
   min-height: 90px;
   resize: vertical;
 }
 
-/* Buttons im Formular */
+/* =========================
+   Edit-Form Aktionen
+   ========================= */
 .edit-form .details-actions {
   display: flex;
   gap: 10px;
@@ -351,20 +400,22 @@ input[type="search"] {
   filter: brightness(1.1);
 }
 
-/* Abbrechen Button: etwas ruhiger */
+/* Sekundärer Button (Abbrechen) */
 .edit-form .btn-secondary {
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* Bearbeiten/Löschen Buttons (außerhalb Edit-Form) weiterhin ok */
+/* Aktionen außerhalb des Edit-Forms */
 .book-details .details-actions {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
 }
 
-/* Mobile: Labels oben statt links */
+/* =========================
+   Edit-Form: Mobile Layout
+   ========================= */
 @media (max-width: 700px) {
   .edit-form .detail-row {
     grid-template-columns: 1fr;

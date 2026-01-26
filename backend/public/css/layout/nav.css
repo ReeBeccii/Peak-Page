@@ -1,17 +1,18 @@
-/* ================================
+/* =========================
    Navigation (Desktop)
-================================ */
-
+   ========================= */
 nav {
   position: relative;
   height: 80px;
   display: flex;
   justify-content: center;
-  align-items: center; /* DAS ist wichtig */
+  align-items: center; /* vertikale Zentrierung der Navigation */
   background-color: var(--dark-color);
 }
 
-/* Burger Button (Desktop versteckt) */
+/* =========================
+   Burger-Menü Button (Desktop ausgeblendet)
+   ========================= */
 .toggle-button {
   display: none;
   position: absolute;
@@ -31,7 +32,9 @@ nav {
   cursor: pointer;
 }
 
-
+/* =========================
+   Burger-Menü Linien
+   ========================= */
 .toggle-button .bar {
   height: 4px;
   width: 100%;
@@ -39,6 +42,9 @@ nav {
   border-radius: 100px;
 }
 
+/* =========================
+   Navigations-Container
+   ========================= */
 .nav-container {
   flex: 1;
   display: flex;
@@ -46,6 +52,9 @@ nav {
   align-items: center;
 }
 
+/* =========================
+   Navigationsliste (Desktop)
+   ========================= */
 nav ul {
   display: flex;
 }
@@ -63,6 +72,9 @@ nav ul li:hover {
   border-bottom: 4px solid var(--accent-color);
 }
 
+/* =========================
+   Navigationslinks
+   ========================= */
 nav ul li a {
   color: var(--text-color);
   text-decoration: none;
@@ -71,14 +83,18 @@ nav ul li a {
   line-height: 1;
 }
 
-/* Logout Button */
+/* =========================
+   Logout-Bereich (Positionierung)
+   ========================= */
 .nav-logout {
   margin-left: auto;
   display: flex;
   align-items: center;
 }
 
-/* Logout wie normaler Nav-Link */
+/* =========================
+   Logout als normaler Nav-Link
+   ========================= */
 .nav-logout {
   height: 80px;
   padding: 0 60px;
@@ -92,8 +108,11 @@ nav ul li a {
   border-bottom: 4px solid var(--accent-color);
 }
 
+/* =========================
+   Logout-Button (reset & Styling)
+   ========================= */
 .logout-btn {
-  all: unset; /* killt Button-Default-Styles */
+  all: unset; /* entfernt alle Default-Button-Styles */
   cursor: pointer;
   color: var(--text-color);
   font-size: 22px;
@@ -101,18 +120,21 @@ nav ul li a {
   line-height: 1;
 }
 
-
-
-/* ================================
+/* =========================
    Navigation (Mobile)
-================================ */
+   ========================= */
 @media (max-width: 1000px) {
-    /* NAV: Burger in die Mitte */
+
+  /* =========================
+     Navigation: Zentrierung für Burger-Menü
+     ========================= */
   nav {
     justify-content: center;
   }
 
-  /* Burger sichtbar & NICHT mehr rechts angeklebt */
+  /* =========================
+     Burger-Menü sichtbar & neu positioniert
+     ========================= */
   .toggle-button {
     display: flex;
     position: static;
@@ -121,24 +143,29 @@ nav ul li a {
     transform: none;
   }
 
- /* Dropdown unter der Leiste */
-   .nav-container {
-     display: none;
-     position: absolute;
-     top: 80px;
-     left: 0;
-     right: 0;
-     width: 100%;
-     flex-direction: column;
-     background-color: var(--dark-color);
-     z-index: 1000;
-     border-top: 1px solid var(--accent-color);
-   }
+  /* =========================
+     Dropdown-Navigation unter der Navbar
+     ========================= */
+  .nav-container {
+    display: none;
+    position: absolute;
+    top: 80px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    flex-direction: column;
+    background-color: var(--dark-color);
+    z-index: 1000;
+    border-top: 1px solid var(--accent-color);
+  }
 
   .nav-container.active {
     display: flex;
   }
 
+  /* =========================
+     Mobile Navigationsliste
+     ========================= */
   .nav-container ul {
     display: flex;
     flex-direction: column;

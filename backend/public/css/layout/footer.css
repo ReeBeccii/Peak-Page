@@ -1,3 +1,6 @@
+/* =========================
+   Footer-Bereich (Banner)
+   ========================= */
 .footer-banner {
   position: relative;       
   width: 100%;
@@ -9,6 +12,9 @@
   z-index: 1;                 
 }
 
+/* =========================
+   Footer-Inhalt (Link-Container)
+   ========================= */
 .footer-inner {
   display: flex;
   justify-content: center;
@@ -17,18 +23,27 @@
   flex-wrap: wrap;           
 }
 
+/* =========================
+   Footer-Links (Grundstil)
+   ========================= */
 .footer-link {
   color: var(--text-color);
   text-decoration: none;
   padding: 8px 0px;
 }
 
+/* =========================
+   Trennzeichen zwischen Footer-Links
+   ========================= */
 .footer-link:not(:last-child)::after {
   content: " | ";
   color: var(--text-color);
   padding: 0 8px;
 }
 
+/* =========================
+   Hover-Effekt für Footer-Links
+   ========================= */
 .footer-link:hover {
   text-decoration: underline;
 }
