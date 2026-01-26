@@ -14,6 +14,13 @@ Das Frontend wird direkt über das Express-Backend ausgeliefert.
 
 ---
 
+## ℹ️ Hinweis
+
+Dieses Frontend ist bewusst als statisches Frontend umgesetzt
+und wird direkt über das Express-Backend ausgeliefert.
+
+---
+
 ## 🧩 Aufbau
 
 ```text

@@ -6,6 +6,25 @@ Das Backend stellt eine REST-API bereit und verwaltet Authentifizierung, Session
 
 ---
 
+## 🚀 Backend starten
+
+```bash
+npm install
+npm start
+
+Der Server läuft standardmäßig auf:
+http://localhost:3000
+
+---
+
+## ➕ API-Hinweis
+Das Backend stellt eine REST-API bereit zur:
+- Benutzerregistrierung & Login
+- Verwaltung von Buchdaten
+- Session-basierter Authentifizierung
+
+---
+
 ## 📁 Verzeichnisstruktur
 
 ```text

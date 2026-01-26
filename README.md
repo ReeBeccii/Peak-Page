@@ -20,6 +20,30 @@ Ziel des Projekts ist es, eine übersichtliche Online-Bibliothek zu entwickeln, 
 
 ---
 
+## ⚙️ Voraussetzungen
+
+
+- Node.js (empfohlen: LTS-Version)
+- npm
+- Webbrowser (Chrome, Firefox, etc.)
+
+---
+
+## 🚀 Projekt starten (lokal)
+
+1. Repository klonen
+2. Ins Backend-Verzeichnis wechseln:
+   ```bash
+   cd peak_page/backend
+3. Abhängigkeiten installieren:
+    npm install
+4. Server starten:
+    npm start
+5. Anwendung im Browser aufrufen:
+    http://localhost:3000
+
+---
+
 ## 🧱 Projektstruktur
 
 ```text
