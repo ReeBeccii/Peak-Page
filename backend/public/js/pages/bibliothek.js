@@ -9,11 +9,9 @@ const filterFormat = document.getElementById("filterFormat");
 const searchText = document.getElementById("searchText");
 const resetBtn = document.getElementById("resetFilters");
 
-const logoutLink = document.getElementById("logoutLink");
-
 const PLACEHOLDER_COVER = "/assets/img/placeholders/cover-placeholder.png";
 
-let allBooks = [];     // komplette API-Liste
+let allBooks = [];      // komplette API-Liste
 let filteredBooks = []; // nach Filter + Suche
 
 function setHint(text) {
@@ -36,6 +34,12 @@ function coverUrlOrPlaceholder(url) {
   return String(url).replace(/^http:\/\//, "https://");
 }
 
+function safeFormatLabel(v) {
+  return typeof window.formatLabel === "function"
+    ? window.formatLabel(v)
+    : String(v ?? "");
+}
+
 // Login-Check
 async function requireLogin() {
   try {
@@ -45,16 +49,6 @@ async function requireLogin() {
     window.location.href = "index.html";
   }
 }
-
-// Logout
-logoutLink?.addEventListener("click", async (e) => {
-  e.preventDefault();
-  try {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-  } finally {
-    window.location.href = "index.html";
-  }
-});
 
 // API laden
 async function loadLibrary() {
@@ -84,15 +78,14 @@ function buildFilterOptions(books) {
     books.map((b) => b.finishedYear).filter((y) => Number.isInteger(y))
   ).sort((a, b) => b - a);
 
-  // Autoren (wir nehmen die erste/n als String – bei dir meist genau 1)
+  // Autoren
   const authors = uniqSorted(
     books.flatMap((b) => (Array.isArray(b.authors) ? b.authors : []))
   );
 
-  // Formate
+  // Formate (DB-Werte als value, Anzeige deutsch)
   const formats = uniqSorted(books.map((b) => b.format));
 
-  // Helper: Select befüllen
   function fillSelect(select, values, allLabel = "Alle") {
     if (!select) return;
     select.innerHTML = "";
@@ -105,7 +98,14 @@ function buildFilterOptions(books) {
     for (const v of values) {
       const opt = document.createElement("option");
       opt.value = String(v);
-      opt.textContent = String(v);
+
+      // Format-Select: deutsch anzeigen
+      if (select === filterFormat) {
+        opt.textContent = safeFormatLabel(v);
+      } else {
+        opt.textContent = String(v);
+      }
+
       select.appendChild(opt);
     }
   }
@@ -123,10 +123,12 @@ function applyFilters() {
 
   filteredBooks = allBooks.filter((b) => {
     if (y && String(b.finishedYear) !== String(y)) return false;
+
     if (a) {
       const authors = Array.isArray(b.authors) ? b.authors : [];
       if (!authors.includes(a)) return false;
     }
+
     if (f && String(b.format) !== String(f)) return false;
 
     if (q) {
@@ -135,6 +137,7 @@ function applyFilters() {
       const hay = `${title} ${authors}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
+
     return true;
   });
 
@@ -161,7 +164,7 @@ function renderList(books) {
   listEl.innerHTML = books.map((b) => {
     const title = b.book?.title || "(ohne Titel)";
     const author = (Array.isArray(b.authors) && b.authors[0]) ? b.authors[0] : "—";
-    const format = b.format || "—";
+    const formatUi = b.format ? safeFormatLabel(b.format) : "—";
     const year = b.finishedYear || "—";
 
     const cover = coverUrlOrPlaceholder(b.book?.coverUrl);
@@ -174,7 +177,6 @@ function renderList(books) {
 
     const notes = b.notes || "—";
 
-    // Wir bauen pro Karte ein kleines Edit-Form (versteckt), damit Editen easy ist.
     return `
       <article class="book-card" data-userbookid="${b.userBookId}">
         <div class="book-head" role="button" tabindex="0" aria-expanded="false">
@@ -184,10 +186,9 @@ function renderList(books) {
           <div class="book-main">
             <div class="book-title">${esc(title)}</div>
             <div class="book-author">${esc(author)}</div>
-            <div class="book-meta">${esc(format)} · Lesejahr ${esc(year)}</div>
+            <div class="book-meta">${esc(formatUi)} · Lesejahr ${esc(year)}</div>
           </div>
 
-          <!-- Die 3 “Pills” rechts -->
           <div class="book-side">
             <div class="pill">Bewertung: ${esc(ratingText)}</div>
             <div class="pill">Preis: ${esc(priceText)}</div>
@@ -219,10 +220,10 @@ function renderList(books) {
                 <div class="k">Format</div>
                 <div class="v">
                   <select class="edit-format">
-                    <option value="paperback" ${format === "paperback" ? "selected" : ""}>Taschenbuch</option>
-                    <option value="hardcover" ${format === "hardcover" ? "selected" : ""}>Hardcover</option>
-                    <option value="ebook" ${format === "ebook" ? "selected" : ""}>eBook</option>
-                    <option value="audio" ${format === "audio" ? "selected" : ""}>Hörbuch</option>
+                    <option value="paperback" ${b.format === "paperback" ? "selected" : ""}>Taschenbuch</option>
+                    <option value="hardcover" ${b.format === "hardcover" ? "selected" : ""}>Hardcover</option>
+                    <option value="ebook" ${b.format === "ebook" ? "selected" : ""}>E-Book</option>
+                    <option value="audiobook" ${b.format === "audiobook" ? "selected" : ""}>Hörbuch</option>
                   </select>
                 </div>
               </div>
@@ -232,11 +233,9 @@ function renderList(books) {
                 <div class="v">
                   <select class="edit-rating">
                     <option value="">(keine)</option>
-                    <option value="1" ${b.rating === 1 ? "selected" : ""}>1</option>
-                    <option value="2" ${b.rating === 2 ? "selected" : ""}>2</option>
-                    <option value="3" ${b.rating === 3 ? "selected" : ""}>3</option>
-                    <option value="4" ${b.rating === 4 ? "selected" : ""}>4</option>
-                    <option value="5" ${b.rating === 5 ? "selected" : ""}>5</option>
+                    ${[1,2,3,4,5].map(n =>
+                      `<option value="${n}" ${b.rating === n ? "selected" : ""}>${n}</option>`
+                    ).join("")}
                   </select>
                 </div>
               </div>
@@ -271,13 +270,12 @@ function renderList(books) {
 }
 
 function wireCardEvents() {
-  // Auf-/Zuklappen + Buttons
   const cards = listEl.querySelectorAll(".book-card");
+
   cards.forEach((card) => {
     const head = card.querySelector(".book-head");
     const details = card.querySelector(".book-details");
 
-    // Toggle Details
     function toggle() {
       const isOpen = !details.hasAttribute("hidden");
       if (isOpen) {
@@ -292,7 +290,6 @@ function wireCardEvents() {
     }
 
     head?.addEventListener("click", (e) => {
-      // Falls jemand direkt auf Button klickt -> nicht togglen
       if (e.target.closest("button")) return;
       toggle();
     });
@@ -304,7 +301,6 @@ function wireCardEvents() {
       }
     });
 
-    // Bearbeiten anzeigen
     const editBtn = card.querySelector(".js-edit");
     const delBtn = card.querySelector(".js-delete");
 
@@ -313,6 +309,10 @@ function wireCardEvents() {
 
     editBtn?.addEventListener("click", () => {
       editForm?.removeAttribute("hidden");
+      // optional: beim Bearbeiten gleich aufklappen
+      details?.removeAttribute("hidden");
+      card.classList.add("open");
+      head?.setAttribute("aria-expanded", "true");
     });
 
     cancelBtn?.addEventListener("click", () => {
@@ -338,7 +338,6 @@ function wireCardEvents() {
         return;
       }
 
-      // aus UI entfernen + Filter neu anwenden
       allBooks = allBooks.filter((b) => String(b.userBookId) !== String(userBookId));
       applyFilters();
     });

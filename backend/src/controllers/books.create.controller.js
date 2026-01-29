@@ -119,16 +119,13 @@ export async function createBook(req, res) {
 
   const authors = parseAuthors(author);
 
-  // Hinweis: Falls Tabellen anders heißen, hier anpassen: authors / book_authors
   for (const name of authors) {
-    // Autor:in holen oder anlegen (Upsert-ähnlich)
     let a = await dbGet(`SELECT id FROM authors WHERE name = ? LIMIT 1`, [name]);
     if (!a) {
       const insA = await dbRun(`INSERT INTO authors (name) VALUES (?)`, [name]);
       a = { id: insA.lastID };
     }
 
-    // Verknüpfung setzen (ohne Duplikate)
     const existingLink = await dbGet(
       `SELECT 1 FROM book_authors WHERE book_id = ? AND author_id = ? LIMIT 1`,
       [bookRow.id, a.id]
@@ -143,22 +140,48 @@ export async function createBook(req, res) {
   }
 
   // --------------------------------------------------
-  // 3) format_id auflösen
+  // 2.5) Prüfen, ob Buch bereits in der Bibliothek existiert
   // --------------------------------------------------
-  // Der Format-Name kommt aus dem Frontend und wird auf die passende ID gemappt.
+  // Verhindert doppelte Einträge in user_books (UNIQUE user_id + book_id).
+  // Statt eines technischen DB-Fehlers wird eine klare Meldung zurückgegeben.
 
-  let formatId = null;
-  if (format) {
-    const f = await dbGet(`SELECT id FROM formats WHERE name = ? LIMIT 1`, [String(format)]);
-    if (f?.id) formatId = f.id;
+  const existingUserBook = await dbGet(
+    `SELECT id FROM user_books WHERE user_id = ? AND book_id = ? LIMIT 1`,
+    [user.id, bookRow.id]
+  );
+
+  if (existingUserBook) {
+    return res.status(409).json({
+      ok: false,
+      error: "Dieses Buch ist bereits in deiner Bibliothek.",
+    });
   }
+
+  // --------------------------------------------------
+// 3) format_id auflösen (mit Fallback)
+// --------------------------------------------------
+// format_id ist in user_books NOT NULL.
+// Wenn format nicht geliefert wird oder unbekannt ist, verwenden wir ein Fallback-Format.
+
+let formatId = null;
+
+if (format) {
+  const f = await dbGet(`SELECT id FROM formats WHERE name = ? LIMIT 1`, [String(format)]);
+  if (f?.id) formatId = f.id;
+}
+
+// Fallback: erstes verfügbares Format verwenden, falls kein gültiges Format gefunden wurde
+if (!formatId) {
+  const fallback = await dbGet(`SELECT id FROM formats ORDER BY id ASC LIMIT 1`);
+  if (fallback?.id) formatId = fallback.id;
+  else {
+    return res.status(500).json({ error: "Konfiguration fehlt: formats Tabelle ist leer." });
+  }
+}
 
   // --------------------------------------------------
   // 4) finished_at bestimmen
   // --------------------------------------------------
-  // Wenn Status "finished":
-  // - wenn readYear gültig: Datum auf 01.01.<Jahr>
-  // - sonst: automatisch "jetzt" (datetime('now'))
 
   let finishedAt = null;
 
@@ -168,11 +191,8 @@ export async function createBook(req, res) {
     } else {
       finishedAt = "AUTO_NOW";
     }
-  } else {
-    finishedAt = null;
   }
 
-  // Hinweis: Wenn "AUTO_NOW", wird im SQL datetime('now') verwendet (ohne Parameter).
   let finishedAtSql = "?";
   let finishedAtParam = finishedAt;
 
@@ -181,13 +201,11 @@ export async function createBook(req, res) {
     finishedAtParam = null;
   }
 
-  // Bewertung nur speichern, wenn das Buch auch als "finished" markiert ist.
   const finalRating = status === "finished" ? (rating ?? null) : null;
 
   // --------------------------------------------------
   // 5) Eintrag in user_books anlegen
   // --------------------------------------------------
-  // Speichert die user-spezifischen Daten (Status, Notizen, Preis, Format, finished_at, Bewertung).
 
   const ub = await dbRun(
     `

@@ -54,9 +54,8 @@ async function requireLogin() {
 
 requireLogin();
 
-// --- Data ---
-let allBooks = [];      // rohe API-Daten
-let filtered = [];      // nach Filtern
+let allBooks = [];
+let filtered = [];
 
 async function fetchSub() {
   setHint("Lade SuB…");
@@ -83,25 +82,31 @@ function buildFilters(items) {
   for (const it of items) {
     const a = Array.isArray(it.authors) ? it.authors : [];
     a.forEach(x => x && authors.add(String(x)));
-
     if (it.format) formats.add(String(it.format));
   }
 
-  fillSelect(filterAuthor, ["Alle", ...Array.from(authors).sort((a,b)=>a.localeCompare(b))]);
-  fillSelect(filterFormat, ["Alle", ...Array.from(formats).sort((a,b)=>a.localeCompare(b))]);
+  fillSelect(filterAuthor, ["Alle", ...Array.from(authors).sort((a,b)=>a.localeCompare(b,"de"))]);
+  fillSelect(filterFormat, ["Alle", ...Array.from(formats).sort((a,b)=>a.localeCompare(b,"de"))]);
 }
 
 function fillSelect(sel, values) {
   if (!sel) return;
   const current = sel.value;
   sel.innerHTML = "";
+
   for (const v of values) {
     const opt = document.createElement("option");
     opt.value = v === "Alle" ? "" : v;
-    opt.textContent = v;
+
+    if (sel === filterFormat && v !== "Alle") {
+      opt.textContent = formatLabel(v);
+    } else {
+      opt.textContent = v;
+    }
+
     sel.appendChild(opt);
   }
-  // restore if possible
+
   if ([...sel.options].some(o => o.value === current)) sel.value = current;
 }
 
@@ -115,11 +120,8 @@ function applyFilters() {
     const authors = Array.isArray(it.authors) ? it.authors.join(", ") : "";
     const hay = (title + " " + authors).toLowerCase();
 
-    if (a) {
-      const arr = Array.isArray(it.authors) ? it.authors : [];
-      if (!arr.some(x => String(x) === a)) return false;
-    }
-    if (f && String(it.format) !== f) return false;
+    if (a && !(Array.isArray(it.authors) && it.authors.includes(a))) return false;
+    if (f && it.format !== f) return false;
     if (q && !hay.includes(q)) return false;
     return true;
   });
@@ -144,21 +146,19 @@ function render() {
 function renderCard(it) {
   const title = it.book?.title ?? "(ohne Titel)";
   const author = Array.isArray(it.authors) && it.authors.length ? it.authors[0] : "—";
-  const meta = `${it.format ?? "—"}`;
+  const meta = it.format ? formatLabel(it.format) : "—";
   const rating = toStars(it.rating);
   const price = euro(it.pricePaid);
-
   const coverUrl = safeCover(it.book?.coverUrl);
-
   const notes = it.notes ? escapeHtml(it.notes) : "—";
 
-  // Status für SuB editierbar (unread/finished)
   const statusVal = it.status ?? "unread";
 
   return `
     <article class="book-card" data-ubid="${it.userBookId}">
       <button class="book-head" type="button" aria-expanded="false">
-        <img class="book-cover" src="${escapeHtml(coverUrl)}" alt="Cover" onerror="this.src='${placeholderCover}'" />
+        <img class="book-cover" src="${escapeHtml(coverUrl)}" alt="Cover"
+             onerror="this.src='${placeholderCover}'" />
         <div class="book-main">
           <div class="book-title">${escapeHtml(title)}</div>
           <div class="book-author">${escapeHtml(author)}</div>
@@ -186,9 +186,9 @@ function renderCard(it) {
           <div class="detail-row">
             <div class="k">Status</div>
             <div class="v">
-              <select name="status" required>
-                <option value="unread" ${statusVal === "unread" ? "selected" : ""}>Ungelesen (SuB)</option>
-                <option value="finished" ${statusVal === "finished" ? "selected" : ""}>Gelesen (Bibliothek)</option>
+              <select name="status">
+                <option value="unread" ${statusVal==="unread"?"selected":""}>Ungelesen (SuB)</option>
+                <option value="finished" ${statusVal==="finished"?"selected":""}>Gelesen (Bibliothek)</option>
               </select>
             </div>
           </div>
@@ -197,10 +197,10 @@ function renderCard(it) {
             <div class="k">Format</div>
             <div class="v">
               <select name="format">
-                <option value="paperback" ${it.format === "paperback" ? "selected" : ""}>Taschenbuch</option>
-                <option value="hardcover" ${it.format === "hardcover" ? "selected" : ""}>Hardcover</option>
-                <option value="ebook" ${it.format === "ebook" ? "selected" : ""}>eBook</option>
-                <option value="audio" ${it.format === "audio" ? "selected" : ""}>Hörbuch</option>
+                <option value="paperback" ${it.format==="paperback"?"selected":""}>Taschenbuch</option>
+                <option value="hardcover" ${it.format==="hardcover"?"selected":""}>Hardcover</option>
+                <option value="ebook" ${it.format==="ebook"?"selected":""}>E-Book</option>
+                <option value="audiobook" ${it.format==="audiobook"?"selected":""}>Hörbuch</option>
               </select>
             </div>
           </div>
@@ -210,7 +210,9 @@ function renderCard(it) {
             <div class="v">
               <select name="rating">
                 <option value="">—</option>
-                ${[1,2,3,4,5].map(n => `<option value="${n}" ${Number(it.rating)===n?"selected":""}>${n}</option>`).join("")}
+                ${[1,2,3,4,5].map(n =>
+                  `<option value="${n}" ${Number(it.rating)===n?"selected":""}>${n}</option>`
+                ).join("")}
               </select>
             </div>
           </div>
@@ -238,6 +240,8 @@ function renderCard(it) {
     </article>
   `;
 }
+
+fetchSub();
 
 function wireCardEvents() {
   document.querySelectorAll(".book-card").forEach(card => {
