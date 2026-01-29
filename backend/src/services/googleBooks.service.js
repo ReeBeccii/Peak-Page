@@ -1,7 +1,8 @@
 // src/services/googleBooks.service.js
-// Node.js 18+ (du hast Node 22) hat fetch global -> KEIN node-fetch nötig.
+// Node.js 18+ hat fetch global.
 
 const GOOGLE_BOOKS_BASE = "https://www.googleapis.com/books/v1/volumes";
+const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY || null;
 
 /**
  * Holt das erste passende Volume zu einer ISBN.
@@ -12,11 +13,18 @@ export async function fetchGoogleVolumeByIsbn(isbn) {
   const clean = String(isbn || "").replace(/[^0-9Xx]/g, "").trim();
   if (!clean) return null;
 
-  const url = `${GOOGLE_BOOKS_BASE}?q=isbn:${encodeURIComponent(clean)}&maxResults=1`;
+  const url =
+    `${GOOGLE_BOOKS_BASE}?q=isbn:${encodeURIComponent(clean)}` +
+    `&maxResults=1` +
+    (GOOGLE_BOOKS_API_KEY ? `&key=${encodeURIComponent(GOOGLE_BOOKS_API_KEY)}` : "");
 
   const res = await fetch(url);
+
   if (!res.ok) {
-    throw new Error(`Google Books API Fehler: ${res.status}`);
+    // 429 explizit erkennbar machen (damit Controller sinnvoll reagieren kann)
+    const err = new Error(`Google Books API Fehler: ${res.status}`);
+    err.status = res.status;
+    throw err;
   }
 
   const data = await res.json().catch(() => ({}));
