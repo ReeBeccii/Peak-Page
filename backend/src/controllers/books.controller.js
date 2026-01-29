@@ -1,7 +1,15 @@
 // src/controllers/books.controller.js
 import { dbAll, dbGet, dbRun } from "../db/db.js";
 
-// Hilfsfunktion: User muss eingeloggt sein
+// ==================================================
+// AUTH / SESSION
+// Zuständig für die Prüfung, ob ein Benutzer eingeloggt ist
+// ==================================================
+
+/**
+ * Prüft, ob ein Benutzer in der Session vorhanden ist.
+ * Gibt den User zurück, wenn eingeloggt – ansonsten 401 und null.
+ */
 function requireUser(req, res) {
   const user = req.session?.user;
   if (!user?.id) {
@@ -11,13 +19,21 @@ function requireUser(req, res) {
   return user;
 }
 
-// GET /api/books  -> alle Bücher des eingeloggten Users (über user_books)
+// ==================================================
+// BUCHLISTE
+// Zuständig für das Abrufen aller Bücher des eingeloggten Benutzers
+// ==================================================
+
+/**
+ * GET /api/books
+ * Liefert alle Bücher des eingeloggten Benutzers (über user_books).
+ */
 export async function listMyBooks(req, res, next) {
   try {
     const user = requireUser(req, res);
     if (!user) return;
 
-    // Hinweis: authors/genres holen wir später per JOIN nach, wenn du willst.
+    // Hinweis: Autoren/Genres können bei Bedarf später per JOIN ergänzt werden.
     const rows = await dbAll(
       `
       SELECT
@@ -49,25 +65,45 @@ export async function listMyBooks(req, res, next) {
   }
 }
 
-// POST /api/books  -> Buch + user_books speichern (inkl authors/genres via deinem create controller)
+// ==================================================
+// BUCH ANLEGEN
+// Zuständig für das Anlegen eines Buches inkl. Verknüpfung zum Benutzer
+// ==================================================
+
+/**
+ * POST /api/books
+ * Soll Buch + user_books speichern (inkl. authors/genres über den Create-Flow).
+ *
+ * Hinweis: Dieser Controller ist aktuell nur ein Platzhalter und muss in den
+ * Routing-/Create-Flow korrekt verdrahtet werden.
+ */
 export async function createBook(req, res, next) {
   try {
     const user = requireUser(req, res);
     if (!user) return;
 
-    // Wir leiten an deinen create-Flow weiter:
-    // Damit du nur einen "Source of Truth" hast.
-    // Falls du create schon in einer extra Datei hast (books.create.controller.js),
-    // dann solltest du in routes direkt diese Datei verwenden.
+    // Weiterleitung an den zentralen Create-Flow:
+    // Ziel: Nur eine Stelle, die die Create-Logik enthält ("Single Source of Truth").
     //
-    // Hier fallback: wir erwarten, dass du die Logik bereits in books.create.controller.js hast.
+    // Wenn du bereits einen eigenen Create-Controller hast (z. B. books.create.controller.js),
+    // sollten die Routes direkt darauf zeigen.
+    //
+    // Fallback: Hier wird erwartet, dass die Logik in books.create.controller.js existiert.
     return next(new Error("createBook Controller ist nicht verdrahtet. Bitte books.routes.js prüfen."));
   } catch (err) {
     next(err);
   }
 }
 
-// GET /api/books/:id -> einzelnes Buch (optional)
+// ==================================================
+// BUCHDETAILS
+// Zuständig für das Abrufen eines einzelnen Buches des eingeloggten Benutzers
+// ==================================================
+
+/**
+ * GET /api/books/:id
+ * Liefert ein einzelnes Buch (optional / je nach Verwendung).
+ */
 export async function getBookById(req, res, next) {
   try {
     const user = requireUser(req, res);

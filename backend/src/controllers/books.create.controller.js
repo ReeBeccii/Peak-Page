@@ -1,6 +1,15 @@
 // src/controllers/books.create.controller.js
 import { dbGet, dbRun } from "../db/db.js";
 
+// ==================================================
+// AUTH / SESSION
+// Zuständig für die Prüfung, ob ein Benutzer eingeloggt ist
+// ==================================================
+
+/**
+ * Prüft, ob ein Benutzer in der Session vorhanden ist.
+ * Gibt den User zurück, wenn eingeloggt – ansonsten 401 und null.
+ */
 function requireUser(req, res) {
   const user = req.session?.user;
   if (!user?.id) {
@@ -10,14 +19,33 @@ function requireUser(req, res) {
   return user;
 }
 
+// ==================================================
+// INPUT-HILFSFUNKTIONEN
+// Zuständig für das Aufbereiten von Eingaben (z. B. Autor:innen-Liste)
+// ==================================================
+
+/**
+ * Wandelt die Autor:innen-Eingabe in ein sauberes Array um.
+ * Erlaubt z. B. "Sebastian Fitzek" oder "A, B, C".
+ */
 function parseAuthors(authorRaw) {
-  // erlaubt: "Sebastian Fitzek" oder "A, B, C"
   return String(authorRaw || "")
     .split(",")
     .map(s => s.trim())
     .filter(Boolean);
 }
 
+// ==================================================
+// BUCH ANLEGEN (CREATE)
+// Zuständig für das Speichern eines Buches inkl. Autor:innen-Mapping und user_books-Eintrag
+// ==================================================
+
+/**
+ * POST /api/books
+ * Legt ein Buch an (oder verwendet ein vorhandenes) und erstellt die Zuordnung
+ * zum eingeloggten Benutzer (user_books). Zusätzlich werden Autor:innen gespeichert
+ * und mit dem Buch verknüpft (authors + book_authors).
+ */
 export async function createBook(req, res) {
   const user = requireUser(req, res);
   if (!user) return;
@@ -36,6 +64,10 @@ export async function createBook(req, res) {
     // publishedYear -> wird bewusst NICHT in books gespeichert (weil deine DB-Spalte nicht existiert)
   } = req.body ?? {};
 
+  // --------------------------------------------------
+  // Validierung
+  // --------------------------------------------------
+
   if (!title || !author) {
     return res.status(400).json({ error: "Titel und Autor:in sind Pflichtfelder." });
   }
@@ -51,7 +83,11 @@ export async function createBook(req, res) {
     }
   }
 
-  // 1) Buch finden oder anlegen (NUR mit Spalten, die es sicher gibt!)
+  // --------------------------------------------------
+  // 1) Buch finden oder anlegen
+  // --------------------------------------------------
+  // Hinweis: Es werden nur Spalten verwendet, die sicher in der DB existieren.
+
   let bookRow = null;
 
   if (isbn) {
@@ -75,19 +111,24 @@ export async function createBook(req, res) {
     bookRow = { id: insertBook.lastID };
   }
 
-  // 2) Autor(en) in authors + Mapping-Tabelle schreiben (damit Bibliothek/SuB sie wieder anzeigen können)
+  // --------------------------------------------------
+  // 2) Autor:innen speichern + Mapping erstellen
+  // --------------------------------------------------
+  // Ziel: Autor:innen in authors pflegen und via book_authors mit dem Buch verknüpfen,
+  // damit Bibliothek/SuB sie später anzeigen können.
+
   const authors = parseAuthors(author);
 
-  // --- HIER ggf. Tabellennamen anpassen: authors und book_authors ---
+  // Hinweis: Falls Tabellen anders heißen, hier anpassen: authors / book_authors
   for (const name of authors) {
-    // author upsert-ish
+    // Autor:in holen oder anlegen (Upsert-ähnlich)
     let a = await dbGet(`SELECT id FROM authors WHERE name = ? LIMIT 1`, [name]);
     if (!a) {
       const insA = await dbRun(`INSERT INTO authors (name) VALUES (?)`, [name]);
       a = { id: insA.lastID };
     }
 
-    // mapping upsert-ish (kein Duplikat)
+    // Verknüpfung setzen (ohne Duplikate)
     const existingLink = await dbGet(
       `SELECT 1 FROM book_authors WHERE book_id = ? AND author_id = ? LIMIT 1`,
       [bookRow.id, a.id]
@@ -100,16 +141,25 @@ export async function createBook(req, res) {
       );
     }
   }
-  // --- ENDE Mapping ---
 
+  // --------------------------------------------------
   // 3) format_id auflösen
+  // --------------------------------------------------
+  // Der Format-Name kommt aus dem Frontend und wird auf die passende ID gemappt.
+
   let formatId = null;
   if (format) {
     const f = await dbGet(`SELECT id FROM formats WHERE name = ? LIMIT 1`, [String(format)]);
     if (f?.id) formatId = f.id;
   }
 
-  // 4) finished_at berechnen (Lesejahr korrekt übernehmen!)
+  // --------------------------------------------------
+  // 4) finished_at bestimmen
+  // --------------------------------------------------
+  // Wenn Status "finished":
+  // - wenn readYear gültig: Datum auf 01.01.<Jahr>
+  // - sonst: automatisch "jetzt" (datetime('now'))
+
   let finishedAt = null;
 
   if (status === "finished") {
@@ -122,6 +172,7 @@ export async function createBook(req, res) {
     finishedAt = null;
   }
 
+  // Hinweis: Wenn "AUTO_NOW", wird im SQL datetime('now') verwendet (ohne Parameter).
   let finishedAtSql = "?";
   let finishedAtParam = finishedAt;
 
@@ -130,7 +181,13 @@ export async function createBook(req, res) {
     finishedAtParam = null;
   }
 
+  // Bewertung nur speichern, wenn das Buch auch als "finished" markiert ist.
   const finalRating = status === "finished" ? (rating ?? null) : null;
+
+  // --------------------------------------------------
+  // 5) Eintrag in user_books anlegen
+  // --------------------------------------------------
+  // Speichert die user-spezifischen Daten (Status, Notizen, Preis, Format, finished_at, Bewertung).
 
   const ub = await dbRun(
     `
@@ -150,6 +207,10 @@ export async function createBook(req, res) {
       ...(finishedAtSql === "?" ? [finishedAtParam] : []),
     ]
   );
+
+  // --------------------------------------------------
+  // Antwort
+  // --------------------------------------------------
 
   return res.status(201).json({
     ok: true,

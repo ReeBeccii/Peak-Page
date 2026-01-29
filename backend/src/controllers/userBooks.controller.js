@@ -1,8 +1,14 @@
+// backend/src/controllers/userBooks.controller.js
 import { dbAll, dbGet, dbRun } from "../db/db.js";
+
+// ==================================================
+// USER-REGAL (user_books)
+// Zuständig für Laden, Anlegen, Aktualisieren und Löschen von Regal-Einträgen
+// ==================================================
 
 /**
  * GET /api/user-books?user_id=...
- * Liefert das Regal eines Users
+ * Liefert das Regal eines Benutzers (user_books) inkl. Basis-Buchdaten und Autor:innen-Text.
  */
 export async function listUserBooks(req, res) {
   const userId = Number(req.query.user_id);
@@ -27,7 +33,7 @@ export async function listUserBooks(req, res) {
      b.isbn13,
      b.cover_url,
      b.default_price,
-     -- ✅ Autor(en) als Text dazupacken
+     -- Autor:innen als Text zusammenfassen (z. B. "A, B, C")
      COALESCE(GROUP_CONCAT(a.name, ', '), '') AS author
    FROM user_books ub
    JOIN books b ON b.id = ub.book_id
@@ -42,9 +48,14 @@ export async function listUserBooks(req, res) {
   res.json(rows);
 }
 
+// ==================================================
+// REGAL-EINTRAG ANLEGEN
+// Zuständig für das Erstellen eines neuen user_books Eintrags
+// ==================================================
+
 /**
  * POST /api/user-books
- * Erstellt einen Regal-Eintrag
+ * Erstellt einen neuen Regal-Eintrag (user_books) für einen Benutzer und ein Buch.
  */
 export async function createUserBook(req, res) {
   const {
@@ -60,16 +71,34 @@ export async function createUserBook(req, res) {
     last_read_at
   } = req.body;
 
+  // --------------------------------------------------
+  // Validierung (Pflichtfelder)
+  // --------------------------------------------------
+  // user_id und book_id müssen Integer sein.
+
   if (!Number.isInteger(user_id) || !Number.isInteger(book_id)) {
     return res.status(400).json({ error: "user_id und book_id müssen Integer sein" });
   }
+
+  // --------------------------------------------------
+  // Validierung (rating)
+  // --------------------------------------------------
+  // Hier erlaubt: 0..5 (je nach eurer Logik/Frontend).
 
   if (rating !== undefined && (typeof rating !== "number" || rating < 0 || rating > 5)) {
     return res.status(400).json({ error: "rating muss zwischen 0 und 5 liegen" });
   }
 
+  // --------------------------------------------------
+  // Existenzprüfung: Buch muss vorhanden sein
+  // --------------------------------------------------
+
   const bookExists = await dbGet(`SELECT id FROM books WHERE id = ?`, [book_id]);
   if (!bookExists) return res.status(404).json({ error: "book_id existiert nicht" });
+
+  // --------------------------------------------------
+  // Insert: user_books
+  // --------------------------------------------------
 
   const result = await dbRun(
     `INSERT INTO user_books
@@ -92,9 +121,23 @@ export async function createUserBook(req, res) {
 
   res.status(201).json({ id: result.lastID, message: "Regal-Eintrag erstellt" });
 }
+
+// ==================================================
+// REGAL-EINTRAG AKTUALISIEREN
+// Zuständig für das Bearbeiten eines bestehenden user_books Eintrags
+// ==================================================
+
 /**
  * PUT/PATCH /api/user-books/:id
- * Aktualisiert einen Regal-Eintrag
+ * Aktualisiert Felder eines Regal-Eintrags.
+ *
+ * Unterstützt u. a.:
+ * - status (unread | finished)
+ * - rating (1..5)
+ * - notes
+ * - format_id oder format (Name aus dem Frontend)
+ * - price_paid oder pricePaid (Alias aus dem Frontend)
+ * - started_at / finished_at / last_read_at
  */
 export async function updateUserBook(req, res) {
   const id = Number(req.params.id);
@@ -105,26 +148,38 @@ export async function updateUserBook(req, res) {
     notes,
     rating,
     format_id,
-    format,          // ✅ erlaubt: "ebook" | "paperback" | ...
+    format,          // erlaubt: "ebook" | "paperback" | ...
     price_paid,
-    pricePaid,       // ✅ erlaubt (Frontend): pricePaid
+    pricePaid,       // Alias (Frontend): pricePaid
     started_at,
     finished_at,
     last_read_at
   } = req.body ?? {};
 
-  // rating 1..5 oder null/undefined
+  // --------------------------------------------------
+  // Validierung: rating (optional)
+  // --------------------------------------------------
+  // Erlaubt: 1..5 oder null/undefined.
+
   if (rating !== undefined && rating !== null) {
     if (typeof rating !== "number" || rating < 1 || rating > 5) {
       return res.status(400).json({ error: "rating muss zwischen 1 und 5 liegen" });
     }
   }
 
-  // status prüfen (wenn geschickt)
+  // --------------------------------------------------
+  // Validierung: status (optional)
+  // --------------------------------------------------
+  // Wenn status gesetzt wird, muss er in der erlaubten Liste sein.
+
   const allowedStatus = new Set(["unread", "finished"]);
   if (status !== undefined && status !== null && !allowedStatus.has(status)) {
     return res.status(400).json({ error: "Ungültiger Status. Erlaubt: unread, finished." });
   }
+
+  // --------------------------------------------------
+  // Existenzprüfung: Eintrag muss existieren
+  // --------------------------------------------------
 
   const existing = await dbGet(
     `SELECT id, status, finished_at FROM user_books WHERE id = ?`,
@@ -132,32 +187,49 @@ export async function updateUserBook(req, res) {
   );
   if (!existing) return res.status(404).json({ error: "Eintrag nicht gefunden" });
 
-  // ✅ format_id ermitteln, wenn Frontend "format" schickt
+  // --------------------------------------------------
+  // Format ermitteln
+  // --------------------------------------------------
+  // Wenn das Frontend "format" (Name) schickt, wird format_id daraus abgeleitet.
+
   let finalFormatId = format_id ?? null;
   if (!finalFormatId && format) {
     const row = await dbGet(`SELECT id FROM formats WHERE name = ? LIMIT 1`, [String(format)]);
     if (row?.id) finalFormatId = row.id;
   }
 
-  // ✅ pricePaid alias
+  // --------------------------------------------------
+  // Preis-Alias vereinheitlichen
+  // --------------------------------------------------
+  // Unterstützt sowohl price_paid als auch pricePaid (Frontend).
+
   const finalPricePaid = (price_paid !== undefined) ? price_paid : pricePaid;
 
-  // ✅ finished_at Logik bei Statuswechsel
+  // --------------------------------------------------
+  // finished_at Logik bei Statuswechsel
+  // --------------------------------------------------
+  // - Wechsel zu "finished": wenn kein Datum kommt -> automatisch "jetzt"
+  // - Wechsel zu "unread": finished_at wird bewusst entfernt (zurück in SuB)
+
   let finalFinishedAt = finished_at ?? null;
 
   if (status === "finished") {
-    // wenn user kein finished_at schickt: automatisch setzen
     if (!finalFinishedAt) {
       finalFinishedAt = "AUTO_NOW";
     }
   }
 
   if (status === "unread") {
-    // zurück in SuB -> finished_at weg
     finalFinishedAt = "FORCE_NULL";
   }
 
-  // SQL: finished_at dynamisch (AUTO_NOW / FORCE_NULL / normal COALESCE)
+  // --------------------------------------------------
+  // SQL-Baustein: finished_at dynamisch setzen
+  // --------------------------------------------------
+  // AUTO_NOW  -> datetime('now')
+  // FORCE_NULL -> NULL
+  // sonst     -> COALESCE(?, finished_at) (nur überschreiben, wenn Wert geliefert wurde)
+
   let finishedAtSql = "COALESCE(?, finished_at)";
   let finishedAtParam = finalFinishedAt;
 
@@ -168,6 +240,10 @@ export async function updateUserBook(req, res) {
     finishedAtSql = "NULL";
     finishedAtParam = null;
   }
+
+  // --------------------------------------------------
+  // Update ausführen
+  // --------------------------------------------------
 
   const sql = `
     UPDATE user_books
@@ -198,19 +274,28 @@ export async function updateUserBook(req, res) {
   res.json({ ok: true, message: "Eintrag aktualisiert", changes: result.changes });
 }
 
+// ==================================================
+// REGAL-EINTRAG LÖSCHEN
+// Zuständig für das Entfernen eines user_books Eintrags (nur eigener Benutzer)
+// ==================================================
 
 /**
  * DELETE /api/user-books/:id
- * Löscht einen Regal-Eintrag (nur eigener User)
+ * Löscht einen Regal-Eintrag.
+ *
+ * Wichtig:
+ * - User wird aus der Session gelesen (nicht aus Body)
+ * - Es wird geprüft, ob der Eintrag dem User gehört
  */
 export async function deleteUserBook(req, res) {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: "Ungültige ID" });
 
-  // ✅ user aus Session statt Body
+  // Benutzer aus Session lesen (nicht aus dem Request-Body)
   const userId = req.session?.user?.id;
   if (!userId) return res.status(401).json({ error: "Nicht eingeloggt." });
 
+  // Prüfen, ob der Eintrag existiert und dem Benutzer gehört
   const existing = await dbGet(
     `SELECT id FROM user_books WHERE id = ? AND user_id = ?`,
     [id, userId]
@@ -220,4 +305,3 @@ export async function deleteUserBook(req, res) {
   const result = await dbRun(`DELETE FROM user_books WHERE id = ?`, [id]);
   res.json({ ok: true, message: "Eintrag gelöscht", changes: result.changes });
 }
-

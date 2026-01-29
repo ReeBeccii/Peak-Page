@@ -1,13 +1,22 @@
 // src/controllers/dashboard.controller.js
 import { dbGet } from "../db/db.js";
 
+// ==================================================
+// DASHBOARD
+// Zuständig für Kennzahlen und Zusammenfassungen pro eingeloggtem Benutzer
+// ==================================================
+
 /**
  * GET /api/dashboard
- * Liefert Kennzahlen fürs Dashboard (pro eingeloggtem User)
+ * Liefert die wichtigsten Kennzahlen fürs Dashboard (pro eingeloggtem User).
  */
 export async function getDashboard(req, res) {
   try {
-    // 1) Login check
+    // --------------------------------------------------
+    // 1) Login-Prüfung
+    // --------------------------------------------------
+    // Holt die User-ID aus der Session. Ohne Login gibt es 401.
+
     const userId = req.session?.user?.id;
     if (!userId) {
       return res.status(401).json({ error: "Nicht eingeloggt." });
@@ -16,7 +25,11 @@ export async function getDashboard(req, res) {
     const year = new Date().getFullYear();
     const yearStr = String(year);
 
-    // 2) Gesamt Bücher (Anzahl user_books Einträge)
+    // --------------------------------------------------
+    // 2) Gesamtanzahl Bücher
+    // --------------------------------------------------
+    // Zählt alle user_books Einträge des Benutzers (entspricht „Bücher insgesamt“).
+
     const totalRow = await dbGet(
       `SELECT COUNT(*) AS cnt
        FROM user_books
@@ -24,7 +37,11 @@ export async function getDashboard(req, res) {
       [userId]
     );
 
-    // 3) Dieses Jahr gelesen (finished im aktuellen Jahr)
+    // --------------------------------------------------
+    // 3) Dieses Jahr gelesen
+    // --------------------------------------------------
+    // Zählt alle Bücher mit Status "finished", deren finished_at im aktuellen Jahr liegt.
+
     const yearReadRow = await dbGet(
       `SELECT COUNT(*) AS cnt
        FROM user_books
@@ -35,7 +52,11 @@ export async function getDashboard(req, res) {
       [userId, yearStr]
     );
 
-    // 4) Ausgaben gesamt (price_paid, fallback default_price)
+    // --------------------------------------------------
+    // 4) Ausgaben gesamt
+    // --------------------------------------------------
+    // Summiert price_paid; wenn nicht vorhanden, wird default_price aus books verwendet.
+
     const spendRow = await dbGet(
       `SELECT COALESCE(SUM(COALESCE(ub.price_paid, b.default_price)), 0) AS sum
        FROM user_books ub
@@ -44,8 +65,12 @@ export async function getDashboard(req, res) {
       [userId]
     );
 
-    // 5) Zuletzt gelesen (Objekt: cover + titel + autor)
-    // Autor via GROUP_CONCAT über authors/book_authors
+    // --------------------------------------------------
+    // 5) Zuletzt gelesen
+    // --------------------------------------------------
+    // Ermittelt das zuletzt als "finished" markierte Buch inkl. Cover, Titel und Autor:innen.
+    // Autor:innen werden per GROUP_CONCAT über authors/book_authors zusammengeführt.
+
     const lastReadRow = await dbGet(
       `SELECT
          b.title AS title,
@@ -64,7 +89,12 @@ export async function getDashboard(req, res) {
       [userId]
     );
 
-    // 6) Offene Leihen (falls loans Tabelle existiert)
+    // --------------------------------------------------
+    // 6) Offene Leihen (optional)
+    // --------------------------------------------------
+    // Prüft zuerst, ob die Tabelle "loans" existiert.
+    // Falls ja: zählt alle Leihen ohne returned_at (also noch nicht zurückgegeben).
+
     let loansOpen = 0;
     const loansTable = await dbGet(
       `SELECT 1 AS ok
@@ -84,6 +114,11 @@ export async function getDashboard(req, res) {
       loansOpen = Number(loansRow?.cnt ?? 0);
     }
 
+    // --------------------------------------------------
+    // Antwort fürs Frontend
+    // --------------------------------------------------
+    // Gibt Kennzahlen + optional lastRead-Objekt zurück (oder null, wenn nichts gefunden).
+
     return res.json({
       ok: true,
       total: Number(totalRow?.cnt ?? 0),
@@ -100,6 +135,11 @@ export async function getDashboard(req, res) {
         : null,
     });
   } catch (err) {
+    // --------------------------------------------------
+    // Fehlerbehandlung
+    // --------------------------------------------------
+    // Loggt den Fehler serverseitig und liefert eine allgemeine Fehlermeldung zurück.
+
     console.error("❌ dashboard Fehler:", err);
     return res.status(500).json({ error: "Serverfehler im Dashboard." });
   }
